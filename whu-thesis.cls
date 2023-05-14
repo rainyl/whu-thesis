@@ -8,9 +8,10 @@
 
 \NeedsTeXFormat{LaTeX2e}
 \RequirePackage{expl3 , xparse , l3keys2e}
-\ProvidesExplClass{whu-thesis}{2021/03/21}{0.6a}
+\ProvidesExplClass{whu-thesis}{2021/05/20}{0.6d}
   {Wuhan University Thesis Template}
 
+% TODO 引擎处理修改为英文
 \msg_new:nnn { whu-thesis } { 引擎不支持 }
   {
     whu-thesis ~ 不支持 ~ #1 ~ 引擎。\\\\
@@ -95,6 +96,7 @@
   }
 \ProcessKeysOptions { whu / option }
 
+% TODO 直接改为 keys_set
 \tl_if_eq:NnT \g__whu_option_type_tl { master }
   {
     \keys_define:nn { whu / option }
@@ -112,26 +114,21 @@
 
 \sys_if_engine_luatex:TF
   {
-    \file_if_exist:nTF { jfm-zh_CN.lua }
-      {
-        \clist_gput_right:Nn \g__whu_option_to_class_clist
-          { punct = zh_CN / \g__whu_option_punct_tl }
-      }
-      {
-        \clist_gput_right:Nn \g__whu_option_to_class_clist
-          { punct = \g__whu_option_punct_tl }
-      }
+    \clist_gput_right:Nn \g__whu_option_to_class_clist
+      { punct = zh_CN / \g__whu_option_punct_tl }
   }
   {
     \clist_gput_right:Nn \g__whu_option_to_class_clist
       { punct = \g__whu_option_punct_tl }
   }
-% 判断是否有 chinese-jfm，若有则使用 chinese-jfm
+
 
 \sys_if_engine_xetex:T { \RequirePackage { etoolbox } }
 % 在载入文档类之前引入 etoolbox
 
 %%% ---- 载入 Class ----- %%%
+\PassOptionsToPackage { no-math } { fontspec }
+
 % 开题报告使用 ctexart，论文使用 ctexbook，书脊使用 ltjtarticle
 \tl_if_eq:NnTF \g__whu_option_type_tl { opening }
   {
@@ -196,11 +193,6 @@
 
 \RequirePackage { physics }
 \RequirePackage { siunitx }
-\sisetup
-  {
-    detect-all,
-    group-digits = false
-  }
 
 \RequirePackage { algorithm2e }     % 算法代码
 \tl_set:Nn \algorithmcfname { 算法 }
@@ -214,19 +206,9 @@
 
 %%% ---- 定义页面样式 ----- %%%
 \RequirePackage { geometry }
-\tl_if_eq:NnTF \g__whu_option_type_tl { bachelor }
-  {
-    \geometry
-      { hmargin = 3 cm , top = 2.5 cm , bottom = 2 cm , ignoreall }
-  }
-  {
-    \tl_if_eq:NnTF \g__whu_option_type_tl { opening }
-      {
-        \geometry
-          { hmargin = 3 cm , top = 2.5 cm , bottom = 2 cm , ignoreall }
-      }
-      { \geometry { margin = 2.5 cm , ignoreall } }
-  }
+\clist_if_in:nVTF { bachelor , opening } \g__whu_option_type_tl
+  { \geometry { hmargin = 3 cm , top = 2.5 cm , bottom = 2 cm , ignoreall } }
+  { \geometry { margin = 2.5 cm , ignoreall } }
 % 本科、开题报告左右边距 3 cm，上边距 2.5 cm，下边距 2 cm
 % 硕博边距 2.5 cm。
 
@@ -243,30 +225,40 @@
 \tl_set:Nn \headrulewidth { \c_zero_dim }  % 页眉线宽
 \tl_set:Nn \footrulewidth { \c_zero_dim }  % 页脚线宽
 
-\ctex_at_end_preamble:n
+\AtEndPreamble
   {
     \tl_new:N \g__whu_head_odd_tl
     \tl_new:N \g__whu_head_even_tl
     \tl_if_eq:NnT \g__whu_option_type_tl { doctor }
       {
-        \tl_gset:NV \g__whu_head_odd_tl \g__whu_info_title_tl
+        \tl_gset_eq:NN \g__whu_head_odd_tl \g__whu_info_title_tl
         \tl_gremove_all:Nn \g__whu_head_odd_tl { \\ }
         \tl_gset:Nn \g__whu_head_even_tl { 武汉大学博士学位论文 }
       }
     \tl_if_eq:NnT \g__whu_option_type_tl { master }
       {
-        \tl_gset:NV \g__whu_head_odd_tl \g__whu_info_title_tl
+        \tl_gset_eq:NN \g__whu_head_odd_tl \g__whu_info_title_tl
         \tl_gremove_all:Nn \g__whu_head_odd_tl { \\ }
         \tl_gset:Nn \g__whu_head_even_tl { 武汉大学硕士学位论文 }
       }
 
     % 默认页面页眉页脚样式
-    \fancypagestyle { plain }
+    \clist_if_in:nVTF { doctor , master } \g__whu_option_type_tl
       {
-        \fancyhf {}
-        \fancyhead [ O C ] { \zihao { 5 } \g__whu_head_odd_tl }
-        \fancyhead [ E C ] { \zihao { 5 } \g__whu_head_even_tl }
-        \fancyfoot [ C ]   { \zihao { 5 } \thepage }
+        \fancypagestyle { plain }
+          {
+            \fancyhf {}
+            \fancyfoot [ C ]   { \zihao { 5 } \thepage }
+            \fancyhead [ O C ] { \zihao { 5 } \g__whu_head_odd_tl }
+            \fancyhead [ E C ] { \zihao { 5 } \g__whu_head_even_tl }
+          }
+      }
+      {
+        \fancypagestyle { plain }
+          {
+            \fancyhf {}
+            \fancyfoot [ C ] { \zihao { 5 } \thepage }
+          }
       }
   }
 
@@ -383,13 +375,23 @@
 % 图表标题设置
 \RequirePackage [ labelsep = quad ] { caption } % 序号之后空一格写标题
 % 设置表格标题字体为黑体, 设置图标题字体为宋体
-\DeclareCaptionFont { tablecap } { \bfseries \tablecap }
-\captionsetup [ table ] { textfont = tablecap }
-\tl_set:Nn \figurename {                     \zihao { -4 } 图 }
-\tl_set:Nn \tablename  { \bfseries \tablecap \zihao { -4 } 表 }
+\DeclareCaptionFont { whutablecap  }
+  { \heiti \addCJKfontfeatures { BoldFont = * } \bfseries \zihao { -4 } }
+\DeclareCaptionFont { whufigurecap }
+  { \songti \zihao { -4 } }
+\captionsetup [ table ]
+  {
+    name = 表,
+    font = whutablecap
+  }
+\captionsetup [ figure ]
+  {
+    name = 图,
+    font = whufigurecap
+  }
 
 \RequirePackage { graphicx }
-\ctex_at_end_preamble:n
+\AtEndPreamble
   { \exp_args:NV \graphicspath \g__whu_style_graphics_path_tl }
 % 图片文件路径
 
@@ -459,9 +461,7 @@
   }
 
 %%% ---- 定义字体 ----- %%%
-\bool_new:N \g__whu_newtx_bool
-\msg_new:nnn { whu-thesis } { newtx }
-  { font ~ = ~ newtx ~ 必须与 ~ math-font ~ = ~ newtx ~ 搭配使用！ }
+\RequirePackage { unicode-math }
 
 \cs_new_protected:Npn \__whu_fontset:n #1
   { \cs_gset_eq:Nc \__whu_set_font: { __whu_set_font_ #1 : } }
@@ -473,17 +473,17 @@
 \keys_define:nn { whu / style }
   {
     font .choices:nn =
-      { times , xits , termes , newtx }
+      { times , xits , termes , none }
       { \__whu_fontset:n { \l_keys_choice_tl } },
     % 西文字体
 
     math-font .choices:nn =
-      { xits , termes , newtx }
+      { xits , termes , none }
       { \__whu_math_fontset:n { \l_keys_choice_tl } },
     % 数学字体
 
     cjk-font .choices:nn =
-      { windows , mac , fandol , overleaf }
+      { windows , mac , fandol , overleaf , none }
       { \__whu_cjk_fontset:n { \l_keys_choice_tl } },
     % 中文字体
   }
@@ -517,11 +517,7 @@
       ]
   }
 
-\cs_new_protected:Npn \__whu_set_font_newtx:
-  {
-    \RequirePackage { newtxtext }
-    \bool_gset_inverse:N \g__whu_newtx_bool
-  }
+\cs_new_protected:Npn \__whu_set_font_none: {}
 
 % 中文字体
 \cs_new_protected:Npn \__whu_set_cjk_font_song:nn #1#2
@@ -533,7 +529,6 @@
   {
     \setCJKsansfont {#1} [#2]
     \newCJKfontfamily { \heiti } {#1} [#2]
-    \newCJKfontfamily { \tablecap } {#1} [ BoldFont = #1 ]
   }
 \cs_new_protected:Npn \__whu_set_cjk_font_fang:nn #1#2
   {
@@ -541,17 +536,13 @@
     \newCJKfontfamily { \fangsong } {#1} [#2]
     \cs_new:Npn \__whu_set_spine_font:
       {
-        \file_if_exist:nTF { jfm-zh_CN.lua }
-          {
-            \exp_not:N \setmainjfont {#1}
-              [
-                #2 , TateFeatures =
-                  {
-                    JFM = zh_CN / { \exp_not:o \g__whu_option_punct_tl , vert }
-                  }
-              ]
-          }
-          { \exp_not:N \setmainjfont {#1} [#2] }
+        \exp_not:N \setmainjfont {#1}
+          [
+            #2 , TateFeatures =
+              {
+                JFM = zh_CN / { \exp_not:o \g__whu_option_punct_tl , vert }
+              }
+          ]
       }
   }
 \cs_new_protected:Npn \__whu_set_cjk_font_kai:nn #1#2
@@ -640,25 +631,22 @@
       { AutoFakeBold = 4 , AutoFakeSlant = 0.167 }
   }
 
+\cs_new_protected:Npn \__whu_set_cjk_font_none: {}
+
 % 数学字体
 \cs_new_protected:Npn \__whu_set_math_font_xits:
   {
-    \RequirePackage { unicode-math }
     \setmathfont { XITSMath-Regular.otf }
       [ BoldFont = XITSMath-Bold.otf ]
+    \setmathfont{ XITSMath-Regular.otf }[range={cal,bfcal},StylisticSet=01]
   }
 
 \cs_new_protected:Npn \__whu_set_math_font_termes:
   {
-    \RequirePackage { unicode-math }
     \setmathfont { texgyretermes-math.otf }
   }
 
-\cs_new_protected:Npn \__whu_set_math_font_newtx:
-  {
-    \RequirePackage { newtxmath }
-    \bool_gset_inverse:N \g__whu_newtx_bool
-  }
+\cs_new_protected:Npn \__whu_set_math_font_none: {}
 
 % 根据系统判断调用字体
 \sys_if_platform_windows:TF
@@ -692,15 +680,11 @@
   }
 
 % 在导言区末加载字体，不被用户配置覆盖
-\ctex_at_end_preamble:n
+\AtEndPreamble
   {
     \__whu_set_font:
     \__whu_set_cjk_font:
     \__whu_set_math_font:
-    \bool_if:NT \g__whu_newtx_bool
-      {
-        \msg_warning:nn { whu-thesis } { newtx }
-      }
   }
 
 %%% ---- 数学定理样式 ----- %%%
@@ -737,11 +721,20 @@
 \skip_set:Nn \belowdisplayshortskip { 0 pt }
 
 % 最后引入 hyperref 包
-\ctex_at_end_preamble:n
+\AtEndPreamble
   {
     \RequirePackage { hyperref }
     \hypersetup { hidelinks }
     \urlstyle { rm }
+
+    \hypersetup
+      {
+        pdftitle  = \g__whu_info_title_tl,
+        pdfauthor = \g__whu_info_author_tl
+      }
+
+    \tl_set_eq:NN \figureautorefname \figurename
+    \tl_set_eq:NN \tableautorefname  \tablename
   }
 
 \cs_new_protected:Npn \__whu_new_chapter_page:
@@ -837,10 +830,10 @@
   }
 
 \tl_new:N \g__whu_style_graphics_path_tl
+\tl_new:N \g__whu_style_bib_style_tl
+\tl_new:N \g__whu_style_cite_style_tl
 
 \bool_new:N \g__whu_style_bib_backend_bibtex_bool
-\bool_new:N \g__whu_style_bib_style_numerical_bool
-\bool_new:N \g__whu_style_cite_style_super_bool
 \bool_new:N \g__whu_style_list_of_figures_bool
 \bool_new:N \g__whu_style_list_of_tables_bool
 
@@ -859,21 +852,16 @@
     bib-backend            .initial:n = bibtex,
 
     % 参考文献样式
-    bib-style               .value_required:n = true,
-    bib-style               .choice:,
-    bib-style / numerical   .code:n =
-      { \bool_gset_true:N  \g__whu_style_bib_style_numerical_bool },
-    bib-style / author-year .code:n =
-      { \bool_gset_false:N \g__whu_style_bib_style_numerical_bool },
+    bib-style .value_required:n = true,
+    bib-style .choices:nn =
+      { numerical , author-year , author-year-numbered , unknown }
+      { \tl_gset_eq:NN \g__whu_style_bib_style_tl \l_keys_choice_tl },
 
     % 引用样式
-    cite-style          .value_required:n = true,
-    cite-style          .choice:,
-    cite-style / super  .code:n =
-      { \bool_gset_true:N  \g__whu_style_cite_style_super_bool },
-    cite-style / inline .code:n =
-      { \bool_gset_false:N \g__whu_style_cite_style_super_bool },
-    cite-style          .initial:n = super,
+    cite-style .value_required:n = true,
+    cite-style .choices:nn =
+      { numerical-super , numerical-inline , author-year , unknown }
+      { \tl_gset_eq:NN \g__whu_style_cite_style_tl \l_keys_choice_tl },
 
     list-of-figures         .choice:,
     list-of-figures / true  .code:n =
@@ -904,29 +892,23 @@
   }
 
 %%% ---- 参考文献设置 ----- %%%
-\clist_map_inline:nn { doctor , master }
+\clist_if_in:nVTF { doctor , master } \g__whu_option_type_tl
   {
-    \tl_if_eq:NnT \g__whu_option_type_tl {#1}
+    \keys_define:nn { whu / style }
       {
-        \keys_define:nn { whu / style }
-          {
-            bib-style .initial:n = author-year
-          }
+        bib-style  .initial:n = author-year,
+        cite-style .initial:n = author-year
+      }
+  }
+  {
+    \keys_define:nn { whu / style }
+      {
+        bib-style  .initial:n = numerical,
+        cite-style .initial:n = numerical-super
       }
   }
 
-\clist_map_inline:nn { bachelor , opening }
-  {
-    \tl_if_eq:NnT \g__whu_option_type_tl {#1}
-      {
-        \keys_define:nn { whu / style }
-          {
-            bib-style .initial:n = numerical
-          }
-      }
-  }
-
-\ctex_at_end_preamble:n
+\BeforeBeginEnvironment { document }
   {
     \bool_if:NTF \g__whu_style_bib_backend_bibtex_bool
       {
@@ -940,44 +922,89 @@
       }
   }
 
+\msg_new:nnn { whu-thesis } { cite-style 无效 }
+  {
+    bib-backend = bibtex 下，\\
+    cite-style = #1 不能与 bib-style = #2 搭配使用！\\
+    
+    请更改 bib-style 或 cite-style，或使用 biblatex！
+  }
+\cs_new_protected:Npn \__whu_invalid_cite_style:
+  {
+    \msg_warning:nnxx { whu-thesis } { cite-style 无效 }
+      { \g__whu_style_cite_style_tl }
+      { \g__whu_style_bib_style_tl }
+  }
+
 \cs_new_protected:Npn \__whu_bibtex_setup:
   {
     \skip_zero:N \bibsep % 参考文献间距设为 0
-    \bool_if:NTF \g__whu_style_bib_style_numerical_bool
+    \tl_if_eq:NnT \g__whu_style_bib_style_tl { numerical }
       {
         \bibliographystyle { data / gbt7714-2005-numerical }
         % \bibliographystyle { data / gbt7714-2005-whu-numerical }
-        \bool_if:NT \g__whu_style_cite_style_super_bool { \NAT@supertrue }
+
         \NAT@numberstrue
+        \clist_if_in:nVTF { numerical-super , numerical-inline }
+          \g__whu_style_cite_style_tl
+          {
+            \tl_if_eq:NnT \g__whu_style_cite_style_tl { numerical-super }
+              { \NAT@supertrue }
+          }
+          { \__whu_invalid_cite_style: }
         \tl_set:Nn \NAT@open  { [ }
         \tl_set:Nn \NAT@close { ] }
         \tl_set:Nn \NAT@sep   { , ~ }
       }
+
+    \clist_if_in:nVT { author-year , author-year-numbered }
+      \g__whu_style_bib_style_tl
       {
         \bibliographystyle { data / gbt7714-2005-author-year }
-        \NAT@numbersfalse
+        \tl_if_eq:NnF \g__whu_style_cite_style_tl { author-year }
+          { \__whu_invalid_cite_style: }
       }
+
     \tl_if_eq:NnT \g__whu_option_type_tl { opening }
       { \RequirePackage [ numbib ] { tocbibind } }
   }
 
 \cs_new_protected:Npn \__whu_biblatex_pre_setup:
   {
-    \bool_if:NTF \g__whu_style_bib_style_numerical_bool
+    \clist_if_in:nVTF { numerical , author-year , author-year-numbered }
+      \g__whu_style_bib_style_tl
       {
-        \PassOptionsToPackage { bibstyle = gb7714-2015 } { biblatex }
-        \bool_if:NT \g__whu_style_cite_style_super_bool
-          { \PassOptionsToPackage { citestyle = gb7714-2015 } { biblatex } }
+        \tl_if_eq:NnTF \g__whu_style_bib_style_tl { numerical }
+          { \PassOptionsToPackage { bibstyle = gb7714-2015   } { biblatex } }
+          { \PassOptionsToPackage { bibstyle = gb7714-2015ay } { biblatex } }
       }
-      { \PassOptionsToPackage { style = gb7714-2015ay } { biblatex } }
+      {
+        \PassOptionsToPackage { bibstyle = \g__whu_style_bib_style_tl }
+          { biblatex }
+      }
+    \clist_if_in:nVTF { numerical-super , numerical-inline , author-year }
+      \g__whu_style_cite_style_tl
+      {
+        \tl_if_eq:NnT \g__whu_style_cite_style_tl { numerical-inline }
+          { \PassOptionsToPackage { citestyle = numeric-comp  } { biblatex } }
+        \tl_if_eq:NnT \g__whu_style_cite_style_tl { numerical-super  }
+          { \PassOptionsToPackage { citestyle = gb7714-2015   } { biblatex } }
+        \tl_if_eq:NnT \g__whu_style_cite_style_tl { author-year }
+          { \PassOptionsToPackage { citestyle = gb7714-2015ay } { biblatex } }
+      }
+      {
+        \PassOptionsToPackage { citestyle = \g__whu_style_cite_style_tl }
+          { biblatex }
+      }
   }
+
 \cs_new_protected:Npn \__whu_biblatex_post_setup:
   {
     \skip_zero:N \bibitemsep % 参考文献间距设为 0
     \clist_if_empty:NF \g__whu_element_bibliography_clist
-      {
-        \clist_map_inline:Nn \g__whu_element_bibliography_clist
-          { \addbibresource {##1} }
+      { 
+        \clist_map_function:NN \g__whu_element_bibliography_clist 
+          \addbibresource
       }
   }
 
@@ -1066,6 +1093,7 @@
       学号： \uline { \hfill \g__whu_info_student_number_tl \hfill } \hfill
       \hfill 姓名： \uline { \hfill \g__whu_info_author_tl \hfill }
     \end { minipage }
+    \par \skip_vertical:n { 10 pt }
     \raggedbottom
     \__whu_set_table_font:
   }
@@ -1156,7 +1184,7 @@
       \par \skip_vertical:n { 2.5 cm }
       \begin { minipage } [ t ] [ 5 cm ] { \textwidth }
         \skip_set:Nn \baselineskip { 40 pt }
-        \centering { \kaishu \zihao { 2 } \g__whu_info_title_tl }
+        \centering { \kaishu \zihao { 1 } \g__whu_info_title_tl }
       \end { minipage } \par
       \group_begin:
         \zihao { 4 }
@@ -1439,16 +1467,39 @@
         \tl_if_eq:NnTF \g__whu_option_type_tl { opening }
           {
             \bool_if:NTF \g__whu_style_bib_backend_bibtex_bool
-              { \exp_args:NV \bibliography \g__whu_element_bibliography_clist }
-              { \printbibliography [ heading = bibnumbered ] }
+              {
+                \tl_if_eq:NnT \g__whu_style_bib_style_tl
+                  { author-year-numbered }
+                  { \setcitestyle { numbers } }
+                \exp_args:NV \bibliography \g__whu_element_bibliography_clist
+              }
+              {
+                \tl_if_eq:NnTF \g__whu_style_bib_style_tl
+                  { author-year-numbered }
+                  {
+                    \printbibliography
+                      [ heading = bibnumbered , env = numerical ]
+                  }
+                  { \printbibliography [ heading = bibnumbered ] }
+              }
           }
           {
             \__whu_new_chapter_page:
             \phantomsection
             \addcontentsline { toc } { chapter } { 参考文献 }
             \bool_if:NTF \g__whu_style_bib_backend_bibtex_bool
-              { \exp_args:NV \bibliography \g__whu_element_bibliography_clist }
-              { \printbibliography }
+              {
+                \tl_if_eq:NnT \g__whu_style_bib_style_tl
+                  { author-year-numbered }
+                  { \setcitestyle { numbers } }
+                \exp_args:NV \bibliography \g__whu_element_bibliography_clist
+              }
+              {
+                \tl_if_eq:NnTF \g__whu_style_bib_style_tl
+                  { author-year-numbered }
+                  { \printbibliography [ env = numerical ] }
+                  { \printbibliography }
+              }
           }
       }
   }
@@ -1461,16 +1512,16 @@
         \chapter * { 攻博期间发表的科研成果目录 }
         \phantomsection
         \addcontentsline { toc } { chapter } { 攻博期间发表的科研成果目录 }
-        \tl_if_eq:NnTF \g__whu_style_bib_style_tl { numerical }
+        \tl_if_eq:NnTF \g__whu_style_bib_style_tl { author-year }
           {
-            \begin { enumerate } [ label = { [ } \arabic* { ] } ]
+            \begin { enumerate } [ label = {} , left = 0 pt .. 0 pt ]
               \file_input:V \g__whu_element_achievements_tl
             \end { enumerate }
           }
           {
-            \begin { description }
+            \begin { enumerate } [ label = { [ } \arabic* { ] } ]
               \file_input:V \g__whu_element_achievements_tl
-            \end { description }
+            \end { enumerate }
           }
       }
   }
@@ -1493,8 +1544,7 @@
     \clist_if_empty:NF \g__whu_element_appendix_clist
       {
         \appendix
-        \clist_map_inline:Nn \g__whu_element_appendix_clist
-          { \file_input:n {##1} }
+        \clist_map_function:NN \g__whu_element_appendix_clist \file_input:n
       }
   }
 
