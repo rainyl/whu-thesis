@@ -13,13 +13,15 @@
 %% 
 %%  This work has the LPPL maintenance status `maintained'.
 %% 
-%%  The Current Maintainer of this work is Kangwei Xia <kangweixia_xdyy@163.com>.
-%%
+%%  The Current Maintainers of this work are
+%%    Siyu Wu <2401336502@qq.com>
+%%    Kangwei Xia <kangweixia_xdyy@163.com>
+%%    Anbo Tao <398943960@qq.com>
 
 %tag 标识节
 \NeedsTeXFormat{LaTeX2e}
 \RequirePackage{expl3}
-\ProvidesExplClass {whu-thesis} {2024-03-27} {v0.0.1}
+\ProvidesExplClass {whu-thesis} {2024-05-29} {v2.2.0}
   {Thesis template for Wuhan University}
 
 
@@ -66,6 +68,15 @@
 %tag 用户设置命令接口
 \NewDocumentCommand \whusetup { m }
   { \keys_set:nn { whu } {#1} }
+\NewDocumentCommand \whumodule { m }
+  { 
+    \ExplSyntaxOn
+    \clist_map_inline:nn { #1 }
+      {
+        \file_input:n { module / module.##1 }
+      }
+    \ExplSyntaxOff
+  }
 
 %tag meta-key
 \keys_define:nn { whu }
@@ -261,6 +272,30 @@
         }
     \group_end:
   }
+%tag 删除章标题中的-\quad
+\cs_new_protected:Npn \__whu_sanitize_chapter_title:n #1
+  {
+    \tl_clear:N \l__whu_tmpa_tl
+    \tl_set:No \l__whu_tmpa_tl {#1}
+    \tl_remove_all:Nn \l__whu_tmpa_tl { \quad }
+  }
+%tag 手动生成章的标题，用于摘要、参考文献等
+\cs_new_protected:Npn \__whu_chapter:n #1
+  {
+    \__whu_sanitize_chapter_title:n {#1}
+    \group_begin:
+      \ctexset { chapter / numbering = false }
+      \chapter [ \l__whu_tmpa_tl ] {#1}
+    \group_end:
+    \__whu_chapter_header:n {#1}
+  }
+\cs_generate_variant:Nn \__whu_chapter:n { V }
+\cs_new_protected:Npn \__whu_chapter_header:n #1
+  {
+    \bool_if:NTF \g__whu_twoside_bool
+      { \markboth {#1} {#1} }
+      { \markboth { \hfill #1 \hfill } { } }
+  }
 %endregion 基本函数
 
 %region 处理文档类的选项
@@ -270,7 +305,7 @@
     type .choice:,
     type .value_required:n = true,
     type .choices:nn =
-      { proposal, bachelor, master, doctor }
+      { bachelor, master, doctor }
       {
         \int_gset_eq:NN \g__whu_thesis_type_int \l_keys_choice_int
         \tl_gset_eq:NN \g__whu_thesis_type_tl \l_keys_choice_tl
@@ -320,8 +355,6 @@
   { Class~ option~ "\l_keys_key_str"~ is~ unknown. }
 \ProcessKeysOptions { whu / option }
 
-
-
 %tag 行距
 
 % 本科的 linespread
@@ -335,25 +368,14 @@
   { \dim_ratio:nn { 20 bp } { 12 bp } / 1.2 }
 
 %tag 字号和行距处理
-\int_case:nn { \g__whu_thesis_type_int }
+\str_case:xn { \tl_to_str:N \g__whu_thesis_type_tl }
   {
-    % 开题报告字号小四
-    {1} { \PassOptionsToClass { zihao = -4 } { ctexbook } }
     % 本科小四，23磅
-    {2} { \PassOptionsToClass { zihao = -4 , linespread = \c__whu_bachelor_line_spread_fp } { ctexbook } }
+    { bachelor } { \PassOptionsToClass { zihao = -4 , linespread = \c__whu_bachelor_line_spread_fp } { ctexbook } }
     % 硕士小四，20磅
-    {3} { \PassOptionsToClass { zihao = -4 , linespread = \c__whu_bachelor_line_spread_fp } { ctexbook } }
+    {  master  } { \PassOptionsToClass { zihao = -4 , linespread = \c__whu_bachelor_line_spread_fp } { ctexbook } }
     % 博士小四，20磅
-    {4} { \PassOptionsToClass { zihao = -4 , linespread = \c__whu_bachelor_line_spread_fp } { ctexbook } }
-  }
-
-%tag 页面的单双面设置
-\int_case:nn { \g__whu_thesis_type_int }
-  {
-    % 开题报告：oneside
-    {1} { \PassOptionsToClass { oneside } { ctexbook } }
-    % 本科：默认 oneside
-    {2} { \PassOptionsToClass { oneside } { ctexbook } }
+    {  doctor  } { \PassOptionsToClass { zihao = -4 , linespread = \c__whu_bachelor_line_spread_fp } { ctexbook } }
   }
 
 \PassOptionsToClass
@@ -376,15 +398,6 @@
   }
   { \PassOptionsToPackage #1 }
 
-\RequirePackage { filehook }
-% 消去 CJK 警告
-\AtEndOfPackageFile* { fontspec }
-  { \msg_redirect_name:nnn { fontspec } { no-script } { none } }
-\AtEndOfPackageFile* { xeCJK }
-  {
-    \msg_redirect_name:nnn { xeCJK } { CJKfamily-redef } { none }
-    \defaultCJKfontfeatures { Script  = CJK }   
-  }
 
 %tag 加载-ctexbook
 \LoadClass { ctexbook }
@@ -422,21 +435,8 @@
 % 统一都是 A4 纸大小
 \geometry{paper = a4paper}
 
-%tag 开题报告
-\cs_new:Npn \__whu_proposal_set_paper_size:
-  {
-    \geometry
-      {
-        left       = 31.75mm,
-        right      = 31.75mm,
-        top        = 25.4mm,
-        bottom     = 25.4mm,
-        headheight = 0pt,
-        headsep    = 0pt
-      }
-  }
 %tag 本科
-\cs_new:Npn \__whu_bachelor_set_paper_size:
+\cs_new_protected:Npn \__whu_bachelor_set_paper_size:
   {
     \geometry
       {
@@ -450,7 +450,7 @@
       }
   }
 %tag 硕士
-\cs_new:Npn \__whu_master_set_paper_size:
+\cs_new_protected:Npn \__whu_master_set_paper_size:
   {
     \geometry
       {
@@ -462,7 +462,7 @@
       }
   }
 %tag 博士
-\cs_new:Npn \__whu_doctor_set_paper_size:
+\cs_new_protected:Npn \__whu_doctor_set_paper_size:
   {
     \geometry
       {
@@ -473,18 +473,8 @@
         headheight = 15pt
       }
   }
-
-\int_case:Vn \g__whu_thesis_type_int  
-  {
-    % 开题报告
-    {1} { \__whu_proposal_set_paper_size: }
-    % 本科
-    {2} { \__whu_bachelor_set_paper_size: }
-    % 硕士
-    {3} { \__whu_master_set_paper_size: }
-    % 博士
-    {4} { \__whu_doctor_set_paper_size: }
-  }
+%tag 设置
+\use:c { __whu_ \g__whu_thesis_type_tl _set_paper_size: }
 %endregion 页面尺寸设置
 
 %region 图书馆版本 去除所有空白页
@@ -495,13 +485,13 @@
     library .default:n   = true,
   }
 \ctex_after_end_preamble:n
-{
-  \bool_if:NT \g__whu_library_version_bool
   {
-    \cs_set_eq:NN \__whu_new_blank_page: \newpage
-    \renewcommand{\cleardoublepage}{\clearpage}
+    \bool_if:NT \g__whu_library_version_bool
+    {
+      \cs_set_eq:NN \__whu_new_blank_page: \newpage
+      \renewcommand{\cleardoublepage}{\clearpage}
+    }
   }
-}
 %endregion 图书馆版本
 
 %region 字体配置 (font configuration)
@@ -618,7 +608,7 @@
 
 
 %region 中文字体设置 (chinese font setting)
-%tag default
+%tag none
 \cs_new_protected:Npn \__whu_style_cjk_font_set_none: { }
 %tag windows
 \cs_new_protected:Npn \__whu_style_cjk_font_set_windows:
@@ -823,7 +813,7 @@
 %tag 设置默认字体
 \keys_set:nn { whu / style }
   {
-    font         = times,
+    font         = termes,
     math-font    = termes,
     cjk-font     = fandol,
     cjk-fakefont = false,
@@ -834,55 +824,8 @@
 
 \setlist{nosep}
 
-%tag 开题报告
-\cs_new:Npn \__whu_proposal_report_set_ctex_format:
-  {
-    \keys_set:nn { ctex }
-      {
-        chapter = 
-          {
-            numbering   = false,
-            format      = \zihao{2}\bfseries\centering,
-            beforeskip  = -3.5ex,
-            afterskip   = 5ex plus 1ex minus 1ex,
-            pagestyle   = empty,
-            titleformat = \__whu_spread_box_with_quad:n
-          },
-        section = 
-          {
-            number      = \chinese{section},
-            name        = {,、},
-            aftername   = {},
-            format      = \zihao{4}
-          }
-    }
-  }
-
-%tag 本科毕业论文（设计）任务书
-\cs_new:Npn \__whu_proposal_tasks_set_ctex_format:
-  {
-    \keys_set:nn { ctex }
-      {
-        chapter = 
-          {
-            numbering   = false,
-            format      = \zihao{3}\bfseries\centering,
-            beforeskip  = 3ex,
-            afterskip   = 7.5ex,
-            pagestyle   = empty
-          },
-        section = 
-          {
-            number      = \chinese{section},
-            name        = {,、},
-            aftername   = {},
-            format      = \zihao{4}
-          }
-    }
-  }
-
 %tag 本科
-\cs_new:Npn \__whu_bachelor_set_ctex_format:
+\cs_new_protected:Npn \__whu_bachelor_set_ctex_format:
   {
     \keys_set:nn { ctex }
       {
@@ -925,7 +868,7 @@
           },
     }
   }
-\cs_new:Npn \__whu_bachelor_set_enumerate_format:
+\cs_new_protected:Npn \__whu_bachelor_set_enumerate_format:
   {
     % enumerate
     \setenumerate[1]
@@ -947,7 +890,7 @@
       }
   }
 %tag 硕士
-\cs_new:Npn \__whu_master_set_ctex_format:
+\cs_new_protected:Npn \__whu_master_set_ctex_format:
   {
     \keys_set:nn { ctex }
       {
@@ -985,7 +928,7 @@
           },
     }
   }
-\cs_new:Npn \__whu_master_set_enumerate_format:
+\cs_new_protected:Npn \__whu_master_set_enumerate_format:
   {
     % enumerate
     \setenumerate[1]
@@ -1007,7 +950,7 @@
       }
   }
 %tag 博士
-\cs_new:Npn \__whu_doctor_set_ctex_format:
+\cs_new_protected:Npn \__whu_doctor_set_ctex_format:
   {
     \keys_set:nn { ctex }
       {
@@ -1045,7 +988,7 @@
           },
     }
   }
-\cs_new:Npn \__whu_doctor_set_enumerate_format:
+\cs_new_protected:Npn \__whu_doctor_set_enumerate_format:
   {
     % enumerate
     \setenumerate[1]
@@ -1066,41 +1009,9 @@
         label          = \roman{*}.
       }
   }
-
-\int_case:Vn \g__whu_thesis_type_int  
-  {
-    % 本科
-    {2}
-      {
-        \__whu_bachelor_set_enumerate_format:
-        \__whu_bachelor_set_ctex_format: 
-      }
-    % 硕士
-    {3}
-      {
-        \__whu_master_set_enumerate_format:
-        \__whu_master_set_ctex_format: 
-      }
-    % 博士
-    {4}
-      {
-        \__whu_doctor_set_enumerate_format:
-        \__whu_doctor_set_ctex_format: 
-      }
-  }
-
-\NewDocumentCommand { \ProposalTasks } { O{武汉大学本科毕业论文（设计）任务书} }
-  {
-    \__whu_proposal_tasks_set_ctex_format:
-    \chapter{#1}
-    \int_set:Nn \c@section {0}
-  }
-\NewDocumentCommand { \ProposalReport } { O{开题报告} }
-  {
-    \__whu_proposal_report_set_ctex_format:
-    \chapter{#1}
-    \int_set:Nn \c@section {0}
-  }
+%tag 设置
+\use:c { __whu_ \g__whu_thesis_type_tl _set_emunerate_format: }
+\use:c { __whu_ \g__whu_thesis_type_tl _set_ctex_format: }
 %endregion
 
 
@@ -1190,10 +1101,6 @@
     day            .int_set:N = \l__whu_info_day_int,
     keywords     .clist_set:N = \l__whu_info_keywords_clist,
     keywords*    .clist_set:N = \l__whu_info_keywords_en_clist,
-    cover-en-type .choice:,
-    cover-en-type .choices:nn = { normal, cs }
-                                { \tl_set_eq:NN \l__whu_cover_en_type_tl \l_keys_choice_tl },
-    cover-en-type .initial:n = normal
   }
 %tag 初始化公共键
 \keys_set:nn { whu / info }
@@ -1338,77 +1245,21 @@
       }
   }
 %tag 执行初始化
-\int_case:Vn \g__whu_thesis_type_int  
+\str_case:xn { \tl_to_str:N \g__whu_thesis_type_tl }
   {
-    % 本科
-    {2} { \__whu_bachelor_info_initial: }
-    % 硕士
-    {3} { \__whu_master_and_doctor_info_initial:
-          \__whu_master_info_initial: }
-    % 博士
-    {4} { \__whu_master_and_doctor_info_initial:
-          \__whu_doctor_info_initial: }
+    { bachelor } { \__whu_bachelor_info_initial: }
+    { master   } { \__whu_master_and_doctor_info_initial:
+                   \__whu_master_info_initial: }
+    { doctor   } { \__whu_master_and_doctor_info_initial:
+                   \__whu_doctor_info_initial: }
   }
 %endregion 个人信息
-
-%tag 本科任务书个人信息
-\NewDocumentCommand \ProposalTasksinformation { }
-  {
-    \par \noindent 
-    毕业论文（设计）题目：\CJKunderline*{ \l__whu_info_title_tl }\\[5pt]
-    学院：\CJKunderline*{ \l__whu_info_department_tl } \c_space_tl 
-    学号：\CJKunderline*{ \l__whu_info_student_id_tl } \c_space_tl 
-    姓名：\CJKunderline*{ \l__whu_info_author_tl } 
-  }
-% 本科开题报告个人信息
-\NewDocumentCommand \ProposalReportinformation { }
-  {
-    \par \noindent 
-    论文题目：\CJKunderline*{ \l__whu_info_title_tl }\\[10pt]
-    学院：\CJKunderline*{ \l__whu_info_department_tl } \c_space_tl 
-    学号：\CJKunderline*{ \l__whu_info_student_id_tl } \c_space_tl 
-    姓名：\CJKunderline*{ \l__whu_info_author_tl } 
-  }
-% 本科任务书落款
-\NewDocumentCommand \ProposalTasksSignature { }
-  {
-    \dim_compare:nNnTF 
-      { \pagetotal } < { .5 \textheight }
-      { \vfil \null \vfil }
-      {
-        \dim_compare:nNnTF 
-          { \pagegoal - \pagetotal } < { 8em }
-          { \vfill }
-          { \vfil \null \vfil }
-      }
-    \noindent
-    指导老师签名：\CJKunderline*{\hspace*{10em}}  \hfill 
-    年 \hspace*{2em} 月 \hspace*{2em} 日
-  }
-% 本科任务书落款
-\NewDocumentCommand \ProposalReportSignature { }
-  {
-    \dim_compare:nNnTF 
-      { \pagetotal } < { .5 \textheight }
-      { \vfil }
-      {
-        \dim_compare:nNnTF 
-          { \pagegoal - \pagetotal } < { 8em }
-          { \vfill }
-          { \vfil \null \vfil }
-      }
-    \begin{flushright}
-      指导老师签名：\hspace*{8em} \null\\[5pt]
-      年 \hspace*{2em} 月 \hspace*{2em} 日
-    \end{flushright} 
-  }
-
-
 
 %region 中文封面
 %region 本科
 \cs_new_protected:Npn \__whu_bachelor_cover_i:
   {
+    \pdfbookmark{中文封面}{titlepage-zh}
     \newgeometry { hmargin = 2.445 cm , vmargin = 2.54cm }
     % logo and type
     \__whu_bachelor_cover_i_logo_and_type:
@@ -1420,12 +1271,11 @@
     \__whu_bachelor_cover_i_date_zh:
     \restoregeometry
   }
-
-
 %tag logo-and-type
 \cs_new_protected:Npn \__whu_bachelor_cover_i_logo_and_type:
   {
-    \skip_vertical:n { 2.01 cm }\setlength{\fboxsep}{0pt}
+    \mode_leave_vertical:
+    \skip_vertical:n { 2.01 cm }
     \noindent
     \begin{minipage}[t][3.85cm]{\textwidth}
       \centering
@@ -1500,6 +1350,7 @@
 %region 硕士
 \cs_new_protected:Npn \__whu_master_cover_i:
   {
+    \pdfbookmark{中文封面}{titlepage-zh}
     \newgeometry { hmargin = 2.445 cm , vmargin = 2.54cm }
     % 顶部四项
     \__whu_master_cover_i_topmatter:
@@ -1572,72 +1423,29 @@
 %region 个人信息
 \cs_new:Npn \__whu_master_cover_i_information:
   {
-    \str_case:xn { \tl_to_str:N \g__whu_thesis_class_tl }
-      {
-        { academic } { \__whu_master_academic_cover_information: }
-        { professional } { \__whu_master_professional_cover_information: }
-      }
-  }
-%tag 学术学位
-\cs_new_protected:Npn \__whu_master_academic_cover_information:
-  {
-    \clist_set:Nx \l__whu_tmpa_clist
+    \clist_set:Nx \l__whu_tmpa_clist % 个人信息第一列
       {
         \c__whu_name_author_tl,
         \c__whu_name_student_id_tl,
         \c__whu_name_supervisor_tl,
-        \c__whu_name_subject_major_academic_tl,
+        \tl_if_empty:NF \l__whu_info_supervisor_outer_tl
+          { \c__whu_name_supervisor_outer_tl },
+        \use:c { c__whu_name_subject_major_ \g__whu_thesis_class_tl _tl },
         \c__whu_name_research_area_tl
       }
-    \clist_set:Nx \l__whu_tmpb_clist
+    \clist_set:Nx \l__whu_tmpb_clist % 个人信息第二列
       {
         \l__whu_info_author_tl,
         \l__whu_info_student_id_tl,
         \l__whu_info_supervisor_tl \l__whu_info_supervisor_academic_title_tl,
+        \tl_if_empty:NF \l__whu_info_supervisor_outer_tl
+          { \l__whu_info_supervisor_outer_tl 
+            \l__whu_info_supervisor_outer_academic_title_tl },
         \l__whu_info_subject_tl、\l__whu_info_major_tl,
         \l__whu_info_research_area_tl
       }
     \noindent
-    \begin{minipage}[t][5.55cm]{\textwidth}
-      \zihao{4}
-      \skip_vertical:n { 0.35cm }
-      \bool_until_do:nn
-        { \clist_if_empty_p:N \l__whu_tmpa_clist }
-        {
-          \clist_pop:NN \l__whu_tmpa_clist \l__whu_tmpa_tl
-          \clist_pop:NN \l__whu_tmpb_clist \l__whu_tmpb_tl
-          \hspace*{2.19cm}
-          \__whu_spread_box_with_end_spaces:nn { 4.67cm } { \l__whu_tmpa_tl }
-          \makebox[0.42cm][c]{：}
-          \__whu_spread_box_with_end_spaces:nn { 6.17cm } { \l__whu_tmpb_tl }
-          \skip_vertical:n { .185cm }
-        }
-    \end{minipage}\par
-    \skip_vertical:n { 1.95cm }
-  }
-%tag 专业学位 (比学术学位多一个校外导师项)
-\cs_new_protected:Npn \__whu_master_professional_cover_information:
-  {
-    \clist_set:Nx \l__whu_tmpa_clist
-      {
-        \c__whu_name_author_tl,
-        \c__whu_name_student_id_tl,
-        \c__whu_name_supervisor_tl,
-        \c__whu_name_supervisor_outer_tl,
-        \c__whu_name_subject_major_professional_tl,
-        \c__whu_name_research_area_tl
-      }
-    \clist_set:Nx \l__whu_tmpb_clist
-      {
-        \l__whu_info_author_tl,
-        \l__whu_info_student_id_tl,
-        \l__whu_info_supervisor_tl \l__whu_info_supervisor_academic_title_tl,
-        \l__whu_info_supervisor_outer_tl \l__whu_info_supervisor_outer_academic_title_tl,
-        \l__whu_info_subject_tl、\l__whu_info_major_tl,
-        \l__whu_info_research_area_tl
-      }
-    \noindent
-    \begin{minipage}[t][6.66cm]{\textwidth}
+    \begin{minipage}{\textwidth}
       \zihao{4}
       \skip_vertical:n { 0.35cm }
       \bool_until_do:nn
@@ -1685,7 +1493,7 @@
     bachelor-encover .initial:n = false,
     bachelor-encover .default:n = true
   }
-\cs_new:Npn \__whu_bachelor_cover_ii:
+\cs_new_protected:Npn \__whu_bachelor_cover_ii:
   {
     \begin{tikzpicture} [ remember~picture, overlay ]
       % 类型
@@ -1701,7 +1509,7 @@
     \end{tikzpicture}
   }
 %tag 类型
-\cs_new:Npn \__whu_bachelor_cover_ii_type:
+\cs_new_protected:Npn \__whu_bachelor_cover_ii_type:
   {
     \node [ anchor = north ] at
       ( [ shift = { ( 0 , -0.07\textheight ) } ] current~page~text~area.north )
@@ -1716,7 +1524,7 @@
       };
   }
 %tag 标题
-\cs_new:Npn \__whu_bachelor_cover_ii_title:
+\cs_new_protected:Npn \__whu_bachelor_cover_ii_title:
   {
     \node (title) at
       ( [ shift = { ( 0 , -0.29\textheight ) } ] current~page~text~area.north )
@@ -1728,7 +1536,7 @@
       };
   }
 %tag 个人信息
-\cs_new:Npn \__whu_bachelor_cover_ii_information:
+\cs_new_protected:Npn \__whu_bachelor_cover_ii_information:
   {
     \node (information) at
       ( [shift = {(0em, 0em)}]current~page~text~area.center )
@@ -1744,7 +1552,7 @@
       };
   }
 %tag 学校名和logo
-\cs_new:Npn \__whu_bachelor_cover_ii_logo:
+\cs_new_protected:Npn \__whu_bachelor_cover_ii_logo:
   {
     \node [anchor = south] at ([ shift = { ( 0 , 2.5em ) } ] date.north)
       {
@@ -1777,7 +1585,7 @@
     \l__whu_tmpa_tl
   }
 \cs_generate_variant:Nn \__whu_month_cover_to_english_version:n { V }
-\cs_new:Npn \__whu_bachelor_cover_ii_date_en:
+\cs_new_protected:Npn \__whu_bachelor_cover_ii_date_en:
   {
     \node [anchor = south] (date) at
       ([ shift = { ( 0 , 0.05\textheight ) } ] current~page~text~area.south)
@@ -1788,31 +1596,22 @@
   }
 %endregion 本科
 %region 硕士
-\cs_new:Npn \__whu_master_cover_ii:
+\cs_new_protected:Npn \__whu_master_cover_ii:
   {
     \pdfbookmark{英文封面}{titlepage-en}
-    \tl_if_eq:NnTF \l__whu_cover_en_type_tl { normal }
-      {
-        \begin{tikzpicture} [ remember~picture, overlay ]
-          % 标题
-          \__whu_master_cover_ii_title:
-          % 个人信息
-          \__whu_master_cover_ii_information:
-          % 时间
-          \__whu_master_cover_ii_date_en:
-          % 学校名和logo
-          \__whu_master_cover_ii_logo:
-        \end{tikzpicture}
-      }
-      {
-        \tl_if_eq:NnT \l__whu_cover_en_type_tl { cs }
-          {
-            \__whu_master_cs_cover_ii:
-          }
-      }
+    \begin{tikzpicture} [ remember~picture, overlay ]
+      % 标题
+      \__whu_master_cover_ii_title:
+      % 个人信息
+      \__whu_master_cover_ii_information:
+      % 时间
+      \__whu_master_cover_ii_date_en:
+      % 学校名和logo
+      \__whu_master_cover_ii_logo:
+    \end{tikzpicture}
   }
 %tag 标题
-\cs_new:Npn \__whu_master_cover_ii_title:
+\cs_new_protected:Npn \__whu_master_cover_ii_title:
   {
     \node (title) at
       ( [ shift = { ( 0 , -0.1\textheight ) } ] current~page~text~area.north )
@@ -1824,10 +1623,10 @@
       };
   }
 %tag 个人信息
-\cs_new:Npn \__whu_master_cover_ii_information:
+\cs_new_protected:Npn \__whu_master_cover_ii_information:
   {
     \node (information) at
-      ( [shift = {(3em, 5em)}]current~page~text~area.center )
+      ( [shift = {(0em, 5em)}]current~page~text~area.center )
       {
         \tl_put_left:Nn \l__whu_info_supervisor_en_tl
           { \l__whu_info_supervisor_academic_title_en_tl .~ }
@@ -1843,8 +1642,8 @@
         \end{tabular}       
       };
   }
-%tag 学校名和 logo
-\cs_new:Npn \__whu_master_cover_ii_logo:
+%tag 学校名和logo
+\cs_new_protected:Npn \__whu_master_cover_ii_logo:
   {
     \node [anchor = south] at ([ shift = { ( 0 , 2em ) } ] date.north)
       {
@@ -1856,7 +1655,7 @@
       };
   }
 %tag 时间
-\cs_new:Npn \__whu_master_cover_ii_date_en:
+\cs_new_protected:Npn \__whu_master_cover_ii_date_en:
   {
     \node [anchor = south] (date) at
       ([ shift = { ( 0 , 0.01\textheight ) } ] current~page~text~area.south)
@@ -1865,36 +1664,9 @@
         \__whu_month_cover_to_english_version:V \l__whu_info_month_int, \c_space_tl \int_use:N\l__whu_info_year_int
       };
   }
-% 计算机学院、网络安全学院英文封面，依据为计算机学院于
-% 2023-05-10 发布的链接文件 https://cs.whu.edu.cn/info/1140/4335.htm
-\cs_new:Npn \__whu_master_cs_cover_ii:
-  {
-    \begin{tikzpicture}[ remember~picture, overlay, align=center ]
-      \node at ([shift = {(0,-4.16cm)}]current~page~text~area.north)
-        { 
-          \begin{minipage}{\textwidth}
-            \zihao{2} \centering \linespread{1.2}\selectfont
-            \l__whu_info_title_en_tl
-          \end{minipage}
-        };
-      \node at ([shift={(0,1.35cm)}]current~page~text~area.center)
-        { \zihao{4} By \\ \l__whu_info_author_en_tl };
-      \node at ([shift={(0,-2.75cm)}]current~page~text~area.center)
-        { \zihao{4} Supervised~by \\
-          \l__whu_info_supervisor_academic_title_en_tl .\c_space_tl 
-          \l__whu_info_supervisor_en_tl };
-      \node [anchor=south] at ([shift={(0,1.45cm)}]current~page~text~area.south)
-        { \zihao{4} Wuhan~University \\ 
-          \__whu_month_cover_to_english_version:V \l__whu_info_month_int, \c_space_tl 
-          \int_use:N \l__whu_info_year_int };
-      % 用于对比测试
-      % \node at (current~page.center)
-      %   { \includegraphics[width = \paperwidth, height = \paperheight]{./reference/b.pdf} };
-    \end{tikzpicture}
-  }
 %endregion 硕士
 %region 博士
-\cs_new:Npn \__whu_doctor_cover_ii:
+\cs_new_protected:Npn \__whu_doctor_cover_ii:
   {
     \pdfbookmark{英文封面}{titlepage-en}
     \begin{tikzpicture} [ remember~picture, overlay ]
@@ -1909,7 +1681,7 @@
     \end{tikzpicture}
   }
 %tag 标题
-\cs_new:Npn \__whu_doctor_cover_ii_title:
+\cs_new_protected:Npn \__whu_doctor_cover_ii_title:
   {
     \node (title) at
       ( [ shift = { ( 0 , -0.1\textheight ) } ] current~page~text~area.north )
@@ -1921,10 +1693,10 @@
       };
   }
 %tag 个人信息
-\cs_new:Npn \__whu_doctor_cover_ii_information:
+\cs_new_protected:Npn \__whu_doctor_cover_ii_information:
   {
     \node (information) at
-      ( [shift = {(3em, 5em)}]current~page~text~area.center )
+      ( [shift = {(0em, 5em)}]current~page~text~area.center )
       {
         \tl_put_left:Nn \l__whu_info_supervisor_en_tl
           { \l__whu_info_supervisor_academic_title_en_tl .~ }
@@ -1940,7 +1712,7 @@
       };
   }
 %tag 学校名和logo
-\cs_new:Npn \__whu_doctor_cover_ii_logo:
+\cs_new_protected:Npn \__whu_doctor_cover_ii_logo:
   {
     \node [anchor = south] at ([ shift = { ( 0 , 2em ) } ] date.north)
       {
@@ -1954,7 +1726,7 @@
       };
   }
 %tag 时间
-\cs_new:Npn \__whu_doctor_cover_ii_date_en:
+\cs_new_protected:Npn \__whu_doctor_cover_ii_date_en:
   {
     \node [anchor = south] (date) at
       ([ shift = { ( 0 , 0.01\textheight ) } ] current~page~text~area.south)
@@ -1970,6 +1742,7 @@
 %tag 本科原创性声明
 \cs_new_protected:Npn \__whu_bachelor_originality_statement:
   {
+    \pdfbookmark{原创性声明}{originality-statement}
     \noindent
     \begin{minipage}[b][0.8cm]{\textwidth}
       \centering \zihao{-2} \heiti 原创性声明
@@ -1989,6 +1762,7 @@
 %tag 本科版权使用授权书
 \cs_new_protected:Npn \__whu_bachelor_copyright:
   {
+    \pdfbookmark{版权使用授权书}{copyright}
     \skip_vertical:n { 2.3cm }
     \begin{center}
       \heiti \zihao{-2} 版权使用授权书
@@ -2005,11 +1779,12 @@
         \__whu_spread_box:nn{2.5cm}{年月日}
     \group_end:
   }
-
+%tag 硕士原创性声明
 \fp_const:Nn \c__whu_master_statement_line_spread_fp
   { \dim_ratio:nn { 28 bp } { 14 bp } / 1.2 }
-\cs_new:Npn \__whu_master_statement:
+\cs_new_protected:Npn \__whu_master_statement:
   {
+    \pdfbookmark{原创性声明}{statement}
     \group_begin:
       \keys_set:nn { ctex }
         {
@@ -2032,8 +1807,10 @@
       \end{flushright}
     \group_end:
   }
-\cs_new:Npn \__whu_doctor_statement:
+%tag 博士原创性声明
+\cs_new_protected:Npn \__whu_doctor_statement:
   {
+    \pdfbookmark{原创性声明}{statement}
     \group_begin:
       \keys_set:nn { ctex }
         {
@@ -2058,8 +1835,9 @@
     \group_end:
   }
 
-%tag 博士使用授权协议书
-\cs_new:Npn \__whu_doctor_license_agreement:
+%region 硕博使用授权协议书
+%tag 协议书内容
+\cs_new_protected:Npn \__whu_master_doctor_license_agreement:
   {
     \group_begin:
       \keys_set:nn { ctex }
@@ -2072,8 +1850,8 @@
               pagestyle = empty
             }
         }
-      \pdfbookmark{使用授权协议书}{doctor-license-agreement}
       \chapter*{武汉大学学位论文使用授权协议书}
+      \pdfbookmark{使用授权协议书}{license-agreement}
       \linespread{1}
       \fontsize{12bp}{28bp}\selectfont
       本学位论文作者愿意遵守武汉大学关于保存、使用学位论文的管理办法及规定，即：学校有权保存学位论文的印刷本和电子版，并提供文献检索与阅览服务；学校可以采用影印、缩印、数字化或其它复制手段保存论文；在以教学与科研服务为目的前提下，学校可以在校园网内公布部分或全部内容。 \par
@@ -2082,16 +1860,30 @@
       
       \vspace*{3em}
       \begin{minipage}{0.5\textwidth}
-        论文作者（签名）：\CJKunderline*{\hfill}\\[12pt]
-        学号：\CJKunderline*{\hfill}\\[12pt]
-        学院：\CJKunderline*{\hfill}\\[12pt]
-      \end{minipage} \par 
+        论文作者（签名）：\CJKunderline*{\hfill} \\[12pt]
+        学号：          \CJKunderline*{\hfill} \\[12pt]
+        学院：          \CJKunderline*{\hfill}
+      \end{minipage} \par \skip_vertical:n { 18pt }
       \hfill 日期：\hspace{3em} 年 \qquad 月 \qquad 日
     \group_end:
   }
+%tag 控制协议书是否输出
+\keys_define:nn { whu / style }
+  {
+    license .bool_set:N = \l__whu_license_output_bool,
+    license .initial:n = true,
+    license .default:n = true,
+  }
+\AtEndDocument{
+  \bool_if:NT \l__whu_license_output_bool
+    \__whu_master_doctor_license_agreement:
+}
+%endregion 硕博使用授权协议书
+
 %tag 博士论文创新点
 \cs_new_protected:Npn \__whu_doctor_innovation:
   {
+    \pdfbookmark{论文创新点}{innovation}
     \group_begin:
     \keys_set:nn { ctex } 
       {
@@ -2131,14 +1923,13 @@
       { \str_set_eq:NN \l__whu_abstract_keywords_en_type_str \l__whu_abstract_keywords_zh_type_str }
   }
 %tag 本科
-\cs_new:Npn \__whu_bachelor_abstract_output:
+\cs_new_protected:Npn \__whu_bachelor_abstract_output:
   {
     \group_begin:
       \keys_set:nn { ctex } 
         {
           chapter =
             {
-              numbering  = false,
               pagestyle  = bachelor-frontmatter,
               format     = \heiti \zihao{-2} \centering,
               beforeskip = 15pt,
@@ -2158,7 +1949,7 @@
     \newpage
     \group_end:
   }
-\cs_new:Npn \__whu_bachelor_abstract_en_output:
+\cs_new_protected:Npn \__whu_bachelor_abstract_en_output:
   {
     \group_begin:
       \keys_set:nn { ctex } 
@@ -2175,7 +1966,7 @@
       \chapter{ \c__whu_name_abstract_en_tl }
       \zihao{-4}
       % \g__whu_abstract_en_content_tl
-      \file_if_exist:nT { pages/abstract.tex }
+      \file_if_exist:nT { pages/enabstract.tex }
         {
           \file_input:n { pages/enabstract.tex }
         }
@@ -2204,7 +1995,7 @@
       }
   }
 %tag 硕士
-\cs_new:Npn \__whu_master_abstract_output:
+\cs_new_protected:Npn \__whu_master_abstract_output:
   {
     \group_begin:
       \keys_set:nn { ctex } 
@@ -2217,7 +2008,7 @@
             }
         }
       \chapter{ \c__whu_name_abstract_tl }
-      \zihao{-4} \pagestyle{empty}
+      \zihao{-4}
       \file_if_exist:nT { pages/abstract.tex }
         {
           \file_input:n { pages/abstract.tex }
@@ -2228,7 +2019,7 @@
     \newpage
     \group_end:
   }
-\cs_new:Npn \__whu_master_abstract_en_output:
+\cs_new_protected:Npn \__whu_master_abstract_en_output:
   {
     \group_begin:
       \keys_set:nn { ctex } 
@@ -2254,7 +2045,7 @@
     \group_end:
   }
 %tag 博士
-\cs_new:Npn \__whu_doctor_abstract_output:
+\cs_new_protected:Npn \__whu_doctor_abstract_output:
   {
     \group_begin:
       \keys_set:nn { ctex } 
@@ -2278,7 +2069,7 @@
     \newpage
     \group_end:
   }
-\cs_new:Npn \__whu_doctor_abstract_en_output:
+\cs_new_protected:Npn \__whu_doctor_abstract_en_output:
   {
     \group_begin:
       \keys_set:nn { ctex } 
@@ -2304,126 +2095,75 @@
   }
 %endregion
 
-%tag 输出封面、声明、摘要
-\int_compare:nNnF { \g__whu_thesis_type_int } = {1}
+%region 定义封面、声明、摘要、目录部分的输出格式
+%tag 本科
+\cs_new_protected:Npn \__whu_bachelor_frontmatter_output:
   {
-    \ctex_after_end_preamble:n
-    {
-      \pdfbookmark{中文封面}{titlepage}
-      \int_case:Vn \g__whu_thesis_type_int  
-        {
-          % 本科
-          {2} 
-            {
-              \pagestyle{empty}
-              \__whu_bachelor_cover_i:
-              \bool_if:NT \l__whu_bachelor_english_cover_bool
-                {
-                  \newpage
-                  \__whu_bachelor_cover_ii:
-                }
-              \newpage
-              \__whu_bachelor_originality_statement:
-              \__whu_bachelor_copyright:
-              \newpage
-              \frontmatter
-              \pagenumbering{Roman}
-              \pagestyle{ bachelor-frontmatter }
-              \__whu_bachelor_abstract_output:
-              \newpage
-              \__whu_bachelor_abstract_en_output:
-              \newpage
-            }
-          % 硕士
-          {3} 
-            {
-              \pagestyle{empty}
-              \__whu_master_cover_i:
-              \__whu_new_blank_page:
-              \__whu_master_cover_ii:
-              \__whu_new_blank_page:
-              \__whu_master_statement:
-              \newpage
-              \frontmatter
-              \pagestyle{ master-frontmatter }
-              \pagenumbering{Roman}
-              \__whu_master_abstract_output:
-              \newpage
-              \__whu_master_abstract_en_output:
-              \newpage
-            }
-          % 博士
-          {4} 
-            {
-              \pagestyle{empty}
-              \__whu_doctor_cover_i:
-              \__whu_new_blank_page:
-              \__whu_doctor_cover_ii:
-              \__whu_new_blank_page:
-              \__whu_doctor_statement:
-              \__whu_new_blank_page:
-              \__whu_doctor_license_agreement:
-              \__whu_new_blank_page:
-              \__whu_doctor_innovation:
-              \frontmatter
-              \pagestyle{ doctor-frontmatter }
-              \pagenumbering{Roman}
-              \__whu_doctor_abstract_output:
-              \newpage
-              \__whu_doctor_abstract_en_output:
-              \newpage
-            }
-        }
-    }
+    \pagestyle{empty}
+    \__whu_bachelor_cover_i:
+    \bool_if:NT \l__whu_bachelor_english_cover_bool
+      {
+        \newpage
+        \__whu_bachelor_cover_ii:
+      }
+    \newpage
+    \__whu_bachelor_originality_statement:
+    \__whu_bachelor_copyright:
+    \newpage
+    \frontmatter
+    \pagenumbering{Roman}
+    \pagestyle{ bachelor-frontmatter }
+    \__whu_bachelor_abstract_output:
+    \newpage
+    \__whu_bachelor_abstract_en_output:
+    \newpage
+  }
+%tag 硕士
+\cs_new_protected:Npn \__whu_master_frontmatter_output:
+  {
+    \pagestyle{empty}
+    \__whu_master_cover_i:
+    \__whu_new_blank_page:
+    \__whu_master_cover_ii:
+    \__whu_new_blank_page:
+    \__whu_master_statement:
+    \newpage
+    \frontmatter
+    \pagestyle{ master-frontmatter }
+    \pagenumbering{Roman}
+    \__whu_master_abstract_output:
+    \newpage
+    \__whu_master_abstract_en_output:
+    \newpage
+  }
+%tag 博士
+\cs_new_protected:Npn \__whu_doctor_frontmatter_output:
+  {
+    \pagestyle{empty}
+    \__whu_doctor_cover_i:
+    \__whu_new_blank_page:
+    \__whu_doctor_cover_ii:
+    \__whu_new_blank_page:
+    \__whu_doctor_statement:
+    \__whu_new_blank_page:
+    \__whu_doctor_innovation:
+    \frontmatter
+    \pagestyle{ doctor-frontmatter }
+    \pagenumbering{Roman}
+    \__whu_doctor_abstract_output:
+    \newpage
+    \__whu_doctor_abstract_en_output:
+    \newpage
+  }
+%endregion
+
+%tag 输出封面、声明、摘要、目录
+\ctex_after_end_preamble:n
+  {
+    \use:c { __whu_ \g__whu_thesis_type_tl _frontmatter_output: }
   }
 
 %region 目录
-%tag 本科吞参数
-% 目录标题和正文标题相同（即不能输入 \chapter[]{} 只能输入 \chapter{}）
-% 下面采用的是“吞参数”的方法：让 [] 的参数不起作用（被忽略）从而起到吞掉参数的效果
-\__whu_msg_new:nn { bachelor-no-optional-argument }
-  {
-    #1~shouldn't~be~used~with~optional~argument~in~bachelor's~thesis.\\
-    The~optional~argument~of~#1~is~ignored.
-  }
-\cs_new:Npn \__whu_bachelor_chapter_cmds_no_optional_argument:
-  {
-    \NewCommandCopy { \bachelorchapter } { \chapter }
-    \NewCommandCopy { \bachelorsection } { \section }
-    \NewCommandCopy { \bachelorsubsection } { \subsection }
-    \RenewDocumentCommand \chapter { s o m }
-      {
-        \IfBooleanTF {##1}
-          { \bachelorchapter* {##3} }
-          { \bachelorchapter {##3} }  % ]
-        \IfNoValueF {##2}
-          { \__whu_warning:nn { bachelor-no-optional-argument } { \chapter } }
-      }
-    \RenewDocumentCommand \section { s o m }
-      {
-        \IfBooleanTF {##1}
-          { \bachelorsection* {##3} }
-          { \bachelorsection {##3} }  % ]
-        \IfNoValueF {##2}
-          { \__whu_warning:nn { bachelor-no-optional-argument } { \section } }
-      }
-    \RenewDocumentCommand \subsection { s o m }
-      {
-        \IfBooleanTF {##1}
-          { \bachelorsubsection* {##3} }
-          { \bachelorsubsection {##3} }  % ]
-        \IfNoValueF {##2}
-          { \__whu_warning:nn { bachelor-no-optional-argument } { \subsection } }
-      }
-  }
-\AddToHook { begindocument }
-  {
-    \int_case:Vn \g__whu_thesis_type_int  
-      {
-        % 本科
-        {2} { \__whu_bachelor_chapter_cmds_no_optional_argument: }
-      }
-  }
 %tag 本科设置
 \cs_new:Npn \__whu_bachelor_set_tocline:
   {
@@ -2497,15 +2237,9 @@
     % % subsection前的额外垂直间距
     % \dim_set:Nn \cftbeforesubsecskip { 0.1\baselineskip }
   }
-\int_case:Vn \g__whu_thesis_type_int  
-  {
-    % 本科
-    {2} { \__whu_bachelor_set_tocline: }
-    % 硕士
-    {3} { \__whu_master_set_tocline: }
-    % 博士
-    {4} { \__whu_doctor_set_tocline: }
-  }
+%tag 启动设置
+\use:c { __whu_ \g__whu_thesis_type_tl _set_tocline: }
+
 %tag 重定义目录
 \cs_set_eq:NN \__whu_old_tableofcontents: \tableofcontents
 \RenewDocumentCommand \tableofcontents { }
@@ -2581,10 +2315,9 @@
           }
       }
   }
-\int_case:Vn \g__whu_thesis_type_int  
+\tl_if_eq:NnT \g__whu_thesis_type_tl { bachelor }
   {
-    % 本科
-    {2} { \__whu_bachelor_set_appendix: }
+    \__whu_bachelor_set_appendix:
   }
 %endregion 附录设置
 
@@ -2892,38 +2625,11 @@
   }
 %endregion 定理类环境
 
-% 删除章标题中的 \quad
-\cs_new_protected:Npn \__whu_sanitize_chapter_title:n #1
-  {
-    \tl_clear:N \l__whu_tmpa_tl
-    \tl_set:No \l__whu_tmpa_tl {#1}
-    \tl_remove_all:Nn \l__whu_tmpa_tl { \quad }
-  }
-% 手动生成章的标题，用于摘要、参考文献等。
-\cs_new_protected:Npn \__whu_chapter:n #1
-  {
-    \__whu_sanitize_chapter_title:n {#1}
-    \group_begin:
-      \ctexset { chapter / numbering = false }
-      \chapter [ \l__whu_tmpa_tl ] {#1}
-    \group_end:
-    \__whu_chapter_header:n {#1}
-  }
-\cs_generate_variant:Nn \__whu_chapter:n { V }
-\cs_new_protected:Npn \__whu_chapter_header:n #1
-  {
-    \bool_if:NTF \g__whu_twoside_bool
-      { \markboth {#1} {#1} }
-      { \markboth { \hfill #1 \hfill } { } }
-  }
-
 % 封装 LaTeX 的钩子管理机制。本模板中的字体加载命令位于
 % begindocument/before 钩子中，需确保在 xeCJK 之前执行。
 \cs_new_protected:Npn \__whu_gadd_ltxhook:nn #1#2
   { \hook_gput_code:nnn {#1} { . } {#2} }
 \hook_gset_rule:nnnn { begindocument/before } { . } { < } { xeCJK }
-
-
 
 %region 参考文献 (bibliography)
 %tag 定义变量
@@ -2967,7 +2673,7 @@
   }
 %tag 设置参考文献格式默认值
 % 本科默认使用顺序编码制，硕博默认使用著者-出版年制
-\tl_if_eq:VnTF \g__whu_thesis_type_tl { bachelor }
+\tl_if_eq:NnTF \g__whu_thesis_type_tl { bachelor }
   {
     \keys_set:nn { whu / style } { bib-style = numerical }
   }
@@ -3022,7 +2728,7 @@
 %tag bibtex相关设置
 \cs_new_protected:Npn \__whu_bibtex_setup:
   {
-    \tl_if_eq:VnTF \l__whu_bib_gb_style_tl { numerical }
+    \tl_if_eq:NnTF \l__whu_bib_gb_style_tl { numerical }
       {
         \exp_args:NNx \DeclareRobustCommand \parencite
           { \exp_args:No \exp_not:o { \cs:w cite ~ \cs_end: } }
@@ -3046,6 +2752,9 @@
         \IfValueT {##1}
           { \__whu_warning:nn { invalid-option-in-bibtex } {##1} }
       }
+    % 行距与字号
+    \setlength{\bibsep}{0pt}
+    \renewcommand{\bibfont}{\zihao{-4}\linespread{1.625}\selectfont}
   }
 \__whu_msg_new:nn { invalid-option-in-bibtex }
   { Option(s)~ "#1"~ are~ invalid~ in~ BibTeX. }
@@ -3054,13 +2763,13 @@
   {
     \cs_undefine:N \addbibresource
     \clist_new:N \l__whu_biblatex_options_clist
-    \clist_put_right:Nn \l__whu_biblatex_options_clist { hyperref = manual }
+    \clist_put_right:Nn \l__whu_biblatex_options_clist { backend = biber }
     \clist_put_right:Nx \l__whu_biblatex_options_clist % 参考文献样式
       {
         style =
         \tl_if_empty:NTF \l__whu_bib_style_tl
           {
-            \tl_if_eq:VnTF \g__whu_thesis_type_tl { bachelor }
+            \str_if_eq:VnTF \g__whu_thesis_type_tl { bachelor }
               {
                 \str_if_eq:VnTF \l__whu_bib_gb_style_tl { numerical }
                   { gb7714-2015 } { gb7714-2015ay }
@@ -3086,6 +2795,8 @@
     \__whu_biblatex_allow_url_break:
     \__whu_biblatex_use_en_dash:
     \defbibheading { bibliography } [ \bibname ] { \__whu_chapter:n {##1} }
+    \setlength{\bibitemsep}{0pt}
+    \renewcommand{\bibfont}{\zihao{-4}\linespread{1.625}\selectfont}
   }
 % biblatex 下允许 URL 在字母、数字和一些特殊符号处断行
 \cs_new:Npn \__whu_biblatex_allow_url_break:
@@ -3147,3 +2858,5 @@
       { \c__whu_orig_decl_text_tl, \c__whu_auth_decl_text_tl }
       { \tl_set_rescan:Nno ##1 { } {##1} }
   }
+
+\endinput

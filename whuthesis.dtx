@@ -8,9 +8,9 @@
 %</driver>
 % \fi
 %
-% \title{The \cls{whu-thesis} class \\ \bfseries 武汉大学学位论文模板\thanks{\url{https://github.com/whutug/whu-thesis}}}
+% \title{The \cls{whu-thesis} class \\ \bfseries 武汉大学学位论文模板\thanks{\url{https://github.com/whutug/whu-thesis} v2.2.0}}
 % \author{whutug\thanks{\url{https://github.com/whutug}}}
-% \date{2024年4月7日}
+% \date{\today}
 % \maketitle
 % \begin{abstract}
 %   武汉大学学位论文 \LaTeX{} 模板 \cls{whu-thesis} 基于本科生院的论文撰写规范制作，同时参考研究生院提供的《研究生学位论文规范》，用于生成符合武汉大学学位论文排版要求和相应的国家规范、行业标准的学位论文，旨在为同学提供毕业论文书写的方便。
@@ -144,9 +144,9 @@
 % 
 % \begin{function}{type}
 %   \begin{whusyntax}[emph={[1]type}]
-%     type = (*<(bachelor)|master|doctor|proposal>*)
+%     type = (*<(bachelor)|master|doctor>*)
 %   \end{whusyntax}
-%   选择论文类型。四种选项分别代表本科毕业论文、硕士学位论文、博士学位论文与本科开题报告。
+%   选择论文类型。三种选项分别代表本科毕业论文、硕士学位论文和博士学位论文。
 % \end{function}
 % 
 % \begin{function}{class}
@@ -331,7 +331,7 @@
 % \end{function}
 % 
 % \begin{function}{info/academic-title-outer}
-%   \begin{whusyntax}[emph={[1]supervisor-outer}]
+%   \begin{whusyntax}[emph={[1]academic-title-outer}]
 %     academic-title-outer = (*\marg{中文职称名}*)
 %   \end{whusyntax}
 %   校外导师职称。
@@ -367,14 +367,6 @@
 % \end{function}
 % 
 %
-% \begin{function}{info/cover-en-type}
-%   \begin{whusyntax}[emph={[1]cover-en-type}]
-%     cover-en-type = (*<(normal)|cs>*)
-%   \end{whusyntax}
-%   设置英文封面的样式。计算机学院和网络安全学院请选择 \opt{cs}。
-% \end{function}
-% 
-%
 % \subsubsection{论文格式}\label{subsubsec:论文格式}
 % \begin{function}{style}
 %   \begin{whusyntax}[emph={[1]style}]
@@ -386,7 +378,7 @@
 % 
 % \begin{function}{style/font}
 %   \begin{whusyntax}[emph={[1]font}]
-%     font = (*<default|(times)|xits|termes>*)
+%     font = (*<default|times|xits|(termes)>*)
 %   \end{whusyntax}
 %   西文字体设置，具体见表 \ref{tab:font}。
 % \end{function}
@@ -403,9 +395,14 @@
 %       \midrule 
 %         \opt{xits}    & XITS               \\
 %       \midrule 
-%         \opt{termes}  & TeX Gyre Termes    \\
+%         \opt{termes}  & TeX Gyre Termes\tnote{a}    \\
 %       \bottomrule
 %     \end{tabularx}
+%     \vspace*{10pt}
+%     \begin{tablenotes}
+%       \item[a] \TeX{} Gyre Termes 是波兰 \TeX{} 用户组对 Times 进行的开源复刻字体，
+%         已被收录在 \TeX{} Live 中。
+%     \end{tablenotes}
 %   \end{threeparttable}
 % \end{table}
 % 
@@ -438,6 +435,34 @@
 %     cjk-font = (*<windows|mac|(fandol)|sourcehan|none>*)
 %   \end{whusyntax}
 %   中文字体设置，具体见表 \ref{tab:cjk-font}。
+%   如果您是本地编译的话，那么 Windows 用户推荐使用 \kvopt{cjk-font}{windows}，
+%   macOS 用户推荐使用 \kvopt{cjk-font}{mac}，
+%   Linux 用户推荐使用 \kvopt{cjk-font}{fandol}。
+%   在线编译平台 Overleaf 和 TeX Page
+%   的服务器用的是 Linux 操作系统，如果您使用的是这二者的话，可以直接使用
+%   \kvopt{cjk-font}{fandol}。如果您想用其它的字体，例如 Windows 系统自带的中易字库，
+%   那么你需要按下述方法进行额外的操作：
+%   \begin{enumerate}
+%     \item 将字体文件上传至在线编译平台的项目文件夹中（这里不妨假设您上传的字体的文件名分别为 
+%       \file{simsun.ttf}、\file{simhei.ttf}、\file{simkai.ttf} 和 \file{simfang.ttf}）；
+%     \item 在 \cs{whusetup} 中设置 \kvopt{cjk-font}{none}；
+%     \item 在主文件的导言区自行设置：
+%       \begin{latexexample}[morekeywords={\setCJKmainfont,\setCJKsansfont,\setCJKmonofont,\newCJKfontfamily},
+%          emph={[1]BoldFont,ItalicFont}]
+%   \setCJKmainfont{simsun.ttf}[
+%     BoldFont   = simhei.ttf,
+%     ItalicFont = simkai.ttf]
+%   \setCJKsansfont{simhei.ttf}
+%   \setCJKmonofont{simfang.ttf}
+%   \newCJKfontfamily[zhsong]\songti{simsun.ttf}[
+%     BoldFont   = simhei.ttf,
+%     ItalicFont = simkai.ttf]
+%   \newCJKfontfamily[zhhei]\heiti{simhei.ttf}
+%   \newCJKfontfamily[zhfs]\fangsong{simfang.ttf}
+%   \newCJKfontfamily[zhkai]\kaishu{simkai.ttf}
+%       \end{latexexample}
+%   \end{enumerate}
+%   关于 \cs{setCJKmainfont} 等命令的详细用法请阅读 \href{https://ctan.org/pkg/xecjk}{xeCJK} 宏包手册。
 % \end{function}
 % 
 % \begin{table}[!ht]
@@ -446,23 +471,30 @@
 %     \label{tab:cjk-font}
 %     \begin{tabularx}{\textwidth}{CCCCC}
 %       \toprule
-%                                   & \textbf{宋体} & \textbf{黑体} & \textbf{仿宋} & \textbf{楷体}   \\
+%             & \textbf{宋体} & \textbf{黑体} & \textbf{仿宋} & \textbf{楷体}   \\
 %       \midrule
-%       \multirow{2}{*}{\opt{windows}} & （中易）宋体   & （中易）黑体      & （中易）仿宋   & （中易）楷体 \\
-%                                   & SimSun          & SimHei          & FangSong      & KaiTi           \\
+%       \multirow{2}{*}{\opt{windows}}
+%             & （中易）宋体   & （中易）黑体      & （中易）仿宋   & （中易）楷体 \\
+%             &  SimSun      & SimHei          & FangSong      & KaiTi     \\
 %       \midrule
-%       \multirow{2}*{\opt{mac}}    & （华文）宋体-简 & （华文）黑体-简 & 华文仿宋      & （华文）楷体-简 \\
-%                                   & Songti SC       & Heiti SC        & STFangsong    & Kaiti SC        \\
+%       \multirow{2}*{\opt{mac}}
+%             & （华文）宋体-简 & （华文）黑体-简 & 华文仿宋      & （华文）楷体-简 \\
+%             &  Songti SC    & Heiti SC        & STFangsong    & Kaiti SC  \\
 %       \midrule
-%       \multirow{2}*{\opt{fandol}} & Fandol 宋体     & Fandol 黑体     & Fandol 仿宋   & Fandol 楷体     \\
-%                                   & FandolSong      & FandolHei       & FandolFang    & FandolKai       \\
+%       \multirow{2}*{\opt{fandol}}\tnote{a} 
+%             & Fandol 宋体    & Fandol 黑体     & Fandol 仿宋   & Fandol 楷体  \\
+%             & FandolSong    & FandolHei       & FandolFang    & FandolKai   \\
 %       \midrule
-%       \opt{sourcehan}             & 思源宋体         & 思源黑体        & 方正仿宋     & 方正楷体 \\
+%       \opt{sourcehan}\tnote{b} & 思源宋体 & 思源黑体 & 方正仿宋 & 方正楷体 \\
 %       \midrule
-%       \opt{founder}               & 方正书宋         & 方正黑体        & 方正仿宋     & 方正楷体    \\
+%       \opt{founder}   & 方正书宋 & 方正黑体 & 方正仿宋 & 方正楷体 \\
 %       \bottomrule
 %     \end{tabularx}
 %     \vspace*{10pt}
+%     \begin{tablenotes}
+%       \item[a] Fandol 字库为 \TeX{} Live 自带的开源中文字体，使用较为方便，但是缺字较严重，且部分字形有问题，请谨慎使用。
+%       \item[b] 思源字体的下载地址为 \url{https://github.com/adobe-fonts/source-han-sans}。
+%     \end{tablenotes}
 %   \end{threeparttable}
 % \end{table}
 %
@@ -567,6 +599,45 @@
 %     \item 摘要与关键词被拉开，关键词置于页面底部。
 %   \end{itemize}
 % \end{function}
+% 
+% \begin{function}{style/license}
+%   \begin{whusyntax}[emph={[1]license}]
+%     license = (*<\TTF>*)
+%   \end{whusyntax}
+%   用于硕博学位论文，控制是否在论文最后输出学位论文使用授权协议书。
+%   默认输出，此时需要使用 iPad（搭配 Apple Pencil）或者其它的
+%   电子书写工具来填写信息。
+%   若设置为 \kvopt{license}{false}，则需另外打印使用授权协议书，
+%   将其中内容手写完整，扫描后再插入论文之中。
+% \end{function}
+% 
+% 
+% \subsection{模块设置}
+% 
+% 模块用于
+% \begin{itemize}
+%   \item 处理不同的院系对论文格式的差异化要求;
+%   \item 加载及处理额外的功能性宏包。
+% \end{itemize}
+% 基本命令为
+% \begin{function}{\whumodule}
+%   \begin{whusyntax}[morekeywords={\whumodule}]
+%     \whumodule (*\marg{列表}*)
+%   \end{whusyntax}
+%   此命令需在主文件导言区使用，其中 \meta{列表} 为使用的模块名列表，各模块名之间用西文逗号分隔。
+%   目前支持的模块为：
+%   \begin{itemize}
+%     \item 院系处理模块：
+%     \begin{itemize}
+%       \item \texttt{cse}: 网络安全学院
+%       \item \texttt{cs}: 计算机学院
+%     \end{itemize}
+%     \item 宏包加载模块：
+%     \begin{itemize}
+%       \item \texttt{algorithm2e}: 加载 \pkg{algorithm2e} 宏包，用于排版伪代码。
+%     \end{itemize}
+%   \end{itemize}
+% \end{function}
 %
 %
 % \subsection{正文编写}
@@ -604,14 +675,15 @@
 %
 % \begin{function}{notation}
 %   \begin{whusyntax}[emph={[2]notation}]
-%     \begin{notation}(*\oarg{列格式说明}*)
+%     \begin{notation}(*\oarg{符号表标题}*)(*\oarg{列格式说明}*)
 %       (*\meta{符号 1}*)  &  (*\meta{说明}*)  \\
 %       (*\meta{符号 2}*)  &  (*\meta{说明}*)  \\
 %       (*\phantom{\meta{符号 $n$}}*)  (*$\vdots$*)
 %       (*\meta{符号\ \kern-0.1em$n$}*)  &  (*\meta{说明}*)
 %     \end{notation}
 %   \end{whusyntax}
-%   符号表。可选参数 \meta{列格式说明}与 \LaTeX{} 中标准表格的列格
+%   符号表。可选参数 \meta{符号表标题} 的默认值为“符号表”。
+%   可选参数 \meta{列格式说明} 与 \LaTeX{} 中标准表格的列格
 %   式说明语法一致，默认值为“|lp{7.5cm}|”，即第一列宽度自动调整，
 %   第二列限宽 \qty{7.5}{cm}，两列均为左对齐。
 % \end{function}
@@ -785,10 +857,6 @@
 %   \end{tabular}
 % \end{table}
 %
-% 证明环境（\env{proof}）的最后会添加证毕符号“$\QED$”。要确保
-% 该符号在正确的位置显示，您需要按照 \ref{subsec:编译方式}~节
-% 中的有关说明编译\emph{两次}。
-%
 % \begin{function}{\whunewtheorem}
 %   \begin{whusyntax}[deletetexcs={\whunewtheorem},
 %       morekeywords={\whunewtheorem,\whunewtheorem*}]
@@ -832,6 +900,13 @@
 %   致谢。
 % \end{function}
 %
+% \subsection{注意事项}
+% 
+% \begin{itemize}
+%   \item macOS 用户设置西文字体 \kvopt{font}{times} 时，需要将
+%     \href{https://www.ctan.org/pkg/tex-gyre-termes}{TeX Gyre Termes}
+%     字体安装至系统中。
+% \end{itemize}
 % 
 % \section{宏包依赖}
 %
@@ -840,10 +915,11 @@
 % \begin{itemize}
 %   \item 在任何情况下，本模板都会\emph{显式}调用以下宏包（或文档类）：
 %     \begin{itemize}
-%       \item \pkg{expl3}、\pkg{xparse} 和 \pkg{l3keys2e}，用于构建 \LaTeX3 编程环境 \cite{source3}。它们分属 \pkg{l3kernel} 和 \pkg{l3packages} 宏集。
-%       \item \cls{ctex} 文档类，提供中文排版的通用框架，属于 \CTeX{} 宏集\cite{CTeX}。
-%       \item \pkg{amsmath}、\pkg{amssymb} 与 \pkg{amsthm}，对 \LaTeX{} 的数学排版功能进行了全面扩展，并提供定理类环境定制功能。属于 \AmSLaTeX{} 套件。
-%       \item \pkg{mathtools}，是 \pkg{amsmath} 的扩充，修正了 \pkg{amsmath} 的 bug，并提供了更多数学排版功能。
+%       \item \pkg{expl3}、\pkg{xparse} 和 \pkg{l3keys2e}，用于构建
+%             \LaTeX3 编程环境 \cite{source3}。它们分属 \pkg{l3kernel} 和 \pkg{l3packages} 宏集。
+%       \item \cls{ctexbook} 文档类，提供中文排版的通用框架，属于 \CTeX{} 宏集\cite{CTeX}。
+%       \item \pkg{amsmath}、\pkg{amssymb} 与 \pkg{amsthm}，对 \LaTeX{} 的数学排版功能
+%             进行了全面扩展，并提供定理类环境定制功能。属于 \AmSLaTeX{} 套件。
 %       \item \pkg{thmtools}，用于定制定理类环境。
 %       \item \pkg{tikzpagenodes}，用于页面绝对定位，此宏包内部加载 \pkg{ti\emph{k}z}。
 %       \item \pkg{geometry}，用于调整页面尺寸。
@@ -854,15 +930,23 @@
 %       \item \pkg{booktabs}，提供三线表支持。
 %       \item \pkg{enumitem}，提供高度定制化的列表环境。
 %       \item \pkg{footmisc}，用于设置脚注序号每面更新。
-%       \item \pkg{unicode-math}，负责处理 Unicode 编码的 OpenType 数学字体。
 %       \item \pkg{hyperref}，提供交叉引用、超链接、电子书签等功能。
 %       \item \pkg{fixdif}，提供微分算符命令 \cmd{\d}。
 %       \item \pkg{xeCJKfntef}，用于排版下划线。
-%       \item \pkg{filehooks}，用于消除 \pkg{fontspec} 宏包对部分字体缺失 CJK script 的警告。
 %     \end{itemize}
-%     \item 使用 \XeLaTeX{} 编译时，\CTeX{} 会调用 \pkg{xeCJK}\cite{xeCJK} 宏包，而使用 \LuaLaTeX{} 编译时，\CTeX{} 会调用 \pkg{luatexja}\cite{LuaTeX-ja} 宏包与 \pkg{chinese-jfm}。不同的编译方式和中文支持方式会在一定程度上影响 \CTeX{} 宏集的行为，如对空格、标点的处理等。一般来说，使用 \XeLaTeX{} 编译时，推荐在中西文间显式地插入一个西文空格，而使用 \LuaLaTeX{} 编译时中西文间不插入空格。博士论文会在外部编译书脊，书脊使用 \LuaTeX-ja 的竖排文档类 \cls{ltjtarticle}。
-%     \item 开启 \kvopt{style/bib-backend}{bibtex} 后，会调用 \pkg{natbib} 宏包，并依赖 \BibTeX{} 程序。参考文献样式由 \pkg{gbt7714} 宏包提供 \cite{natbib,gbt7714}。
-%     \item 开启 \kvopt{style/bib-backend}{biblatex} 后，会调用 \pkg{biblatex} 宏包，并依赖 \biber{} 程序。参考文献样式由 \pkg{biblatex-gb7714-2015} 宏包提供 \cite{biblatex,biblatex-gb7714-2015}。
+%   \item 数学字体不使用 \opt{default} 时，会加载 \pkg{unicode-math} 宏包来调用 OpenType
+%         数学字体。
+%   \item 使用 \XeLaTeX{} 编译时，\CTeX{} 会调用 \pkg{xeCJK}\cite{xeCJK} 宏包，
+%         而使用 \LuaLaTeX{} 编译时，\CTeX{} 会调用 \pkg{luatexja}\cite{LuaTeX-ja} 宏包
+%         与 \pkg{chinese-jfm}。不同的编译方式和中文支持方式会在一定程度上影响 \CTeX{} 宏集的行为，
+%         如对空格、标点的处理等。一般来说，使用 \XeLaTeX{} 编译时，推荐在中西文间显式地插入一个
+%         西文空格，而使用 \LuaLaTeX{} 编译时中西文间不插入空格。博士论文会在外部编译书脊，
+%         书脊使用 \LuaTeX-ja 的竖排文档类 \cls{ltjtarticle}。
+%   \item 开启 \kvopt{style/bib-backend}{bibtex} 后，会调用 \pkg{natbib} 宏包，
+%         并依赖 \BibTeX{} 程序。参考文献样式由 \pkg{gbt7714} 宏包提供 \cite{natbib,gbt7714}。
+%   \item 开启 \kvopt{style/bib-backend}{biblatex} 后，会调用 \pkg{biblatex} 宏包，
+%         并依赖 \biber{} 程序。参考文献样式由 \pkg{biblatex-gb7714-2015} 宏包
+%         提供 \cite{biblatex,biblatex-gb7714-2015}。
 % \end{itemize}
 % 
 % 这里只列出了本模板直接调用的宏包。这些宏包自身的调用情况，此处不再具体展开。如有需要，请参阅相关文档。
