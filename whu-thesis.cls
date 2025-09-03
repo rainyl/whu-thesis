@@ -1,5 +1,5 @@
 %%
-%%  Copyright (C) 2019--2024 WHUTUG <https://github.com/whutug>
+%%  Copyright (C) 2019--2025 WHUTUG <https://github.com/whutug>
 %% 
 %%  This work may be distributed and/or modified under the
 %%  conditions of the LaTeX Project Public License, either
@@ -20,7 +20,7 @@
 
 %tag 标识节
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesExplClass {whu-thesis} {2024-05-29} {v2.2.0}
+\ProvidesExplClass {whu-thesis} {2025-03-17} {v2.4.0}
   {Thesis template for Wuhan University}
 
 
@@ -248,6 +248,11 @@
           circle ( \l__whu_tikz_circled_number_radius_dim );
       }
   }
+%tag 下划线
+\cs_new:Npn \__whu_rulefill:
+  {
+    \leaders\hrule\@width0pt\@height-2pt\@depth2.5pt\hfill\kern\z@
+  }
 
 %tag 获取宽度与-clist-的内容的最大宽度
 \cs_new:Npn \__whu_get_text_width:Nn #1#2
@@ -369,9 +374,9 @@
     % 本科小四，23磅
     { bachelor } { \PassOptionsToClass { zihao = -4 , linespread = \c__whu_bachelor_line_spread_fp } { ctexbook } }
     % 硕士小四，20磅
-    {  master  } { \PassOptionsToClass { zihao = -4 , linespread = \c__whu_bachelor_line_spread_fp } { ctexbook } }
+    {  master  } { \PassOptionsToClass { zihao = -4 , linespread = \c__whu_master_line_spread_fp } { ctexbook } }
     % 博士小四，20磅
-    {  doctor  } { \PassOptionsToClass { zihao = -4 , linespread = \c__whu_bachelor_line_spread_fp } { ctexbook } }
+    {  doctor  } { \PassOptionsToClass { zihao = -4 , linespread = \c__whu_doctor_line_spread_fp } { ctexbook } }
   }
 
 \PassOptionsToClass
@@ -402,7 +407,6 @@
 \RequirePackage { amsmath }
 \RequirePackage { amssymb }
 \RequirePackage { amsthm }
-\RequirePackage { bookmark }
 \RequirePackage { booktabs }
 \RequirePackage { caption }
 \RequirePackage { enumitem }
@@ -416,13 +420,7 @@
 \RequirePackage { thmtools }
 \RequirePackage { tikzpagenodes }
 \RequirePackage { tocloft }
-\RequirePackage { xeCJK }
-\RequirePackage { xeCJKfntef }
-
-\AtEndPreamble
-  {
-    \RequirePackage { hyperref }
-  }
+\RequirePackage { bookmark }
 
 %tag 图片路径
 \graphicspath{{figures/}{logo/}}
@@ -819,7 +817,12 @@
 %region 章节标题设置与列表设置
 
 \setlist{nosep}
-
+\keys_define:nn { whu / style }
+  {
+    chapter-page-header .bool_set:N = \l__whu_style_chapter_page_header_bool,
+    chapter-page-header .initial:n = false,
+    chapter-page-header .default:n = true,
+  }
 %tag 本科
 \cs_new_protected:Npn \__whu_bachelor_set_ctex_format:
   {
@@ -829,7 +832,7 @@
         secnumdepth = 3,
         chapter = 
           {
-            format       = \zihao{-2}\sffamily\centering,
+            format       = \zihao{-2}\heiti\centering,
             number       = \arabic{chapter},
             numberformat = \rmfamily,
             name         = {},
@@ -840,7 +843,7 @@
           },
         section = 
           {
-            format       = \zihao{4}\sffamily,
+            format       = \zihao{4}\heiti,
             numberformat = \rmfamily,
             beforeskip   = 0.5 \baselineskip,
             afterskip    = 0.5 \baselineskip,
@@ -848,7 +851,7 @@
           },
         subsection = 
           {
-            format       = \zihao{-4}\sffamily,
+            format       = \zihao{-4}\heiti,
             numberformat = \rmfamily,
             beforeskip   = 0.5 \baselineskip,
             afterskip    = 0.5 \baselineskip,
@@ -856,7 +859,7 @@
           },
         subsubsection = 
           {
-            format       = \zihao{-4}\sffamily,
+            format       = \zihao{-4}\heiti,
             numberformat = \rmfamily,
             beforeskip   = 0.5 \baselineskip,
             afterskip    = 0.5 \baselineskip,
@@ -894,33 +897,35 @@
         secnumdepth = 3,
         chapter = 
           {
-            format      = \zihao{-2}\sffamily\raggedright,
-            number      = \arabic{chapter},
-            name        = {},
-            beforeskip  = 4 ex plus 0.5 ex,
-            afterskip   = 4 ex plus 0.5 ex,
-            fixskip     = true,
+            format       = \zihao{-2}\heiti\raggedright,
+            number       = \arabic{chapter},
+            name         = {},
+            beforeskip   = 4 ex plus 0.5 ex,
+            afterskip    = 4 ex plus 0.5 ex,
+            fixskip      = true,
+            pagestyle    = \bool_if:nTF \l__whu_style_chapter_page_header_bool
+              { master-mainmatter } { empty }
           },
         section = 
           {
-            format      = \zihao{4}\sffamily,
+            format       = \zihao{4}\heiti,
             % beforeskip  = 0.5 \baselineskip,
             % afterskip   = 0.5 \baselineskip,
-            fixskip     = true,
+            fixskip      = true,
           },
         subsection = 
           {
-            format      = \zihao{-4}\sffamily,
+            format       = \zihao{-4}\heiti,
             % beforeskip  = 0.5 \baselineskip,
             % afterskip   = 0.5 \baselineskip,
-            fixskip     = true,
+            fixskip      = true,
           },
         subsubsection = 
           {
-            format      = \zihao{-4}\sffamily,
+            format       = \zihao{-4}\heiti,
             % beforeskip  = 0.5 \baselineskip,
             % afterskip   = 0.5 \baselineskip,
-            fixskip     = true,
+            fixskip      = true,
           },
     }
   }
@@ -954,33 +959,35 @@
         secnumdepth = 3,
         chapter = 
           {
-            format      = \zihao{-2}\sffamily\raggedright,
-            number      = \arabic{chapter},
-            name        = {},
-            beforeskip  = 4 ex plus 0.5 ex,
-            afterskip   = 4 ex plus 0.5 ex,
-            fixskip     = true,
+            format       = \zihao{-2}\heiti\raggedright,
+            number       = \arabic{chapter},
+            name         = {},
+            beforeskip   = 4 ex plus 0.5 ex,
+            afterskip    = 4 ex plus 0.5 ex,
+            fixskip      = true,
+            pagestyle    = \bool_if:nTF \l__whu_style_chapter_page_header_bool
+              { doctor-mainmatter } { empty }
           },
         section = 
           {
-            format      = \zihao{4}\sffamily,
+            format       = \zihao{4}\heiti,
             % beforeskip  = 0.5 \baselineskip,
             % afterskip   = 0.5 \baselineskip,
-            fixskip     = true,
+            fixskip      = true,
           },
         subsection = 
           {
-            format      = \zihao{-4}\sffamily,
+            format       = \zihao{-4}\heiti,
             % beforeskip  = 0.5 \baselineskip,
             % afterskip   = 0.5 \baselineskip,
-            fixskip     = true,
+            fixskip      = true,
           },
         subsubsection = 
           {
-            format      = \zihao{-4}\sffamily,
-            % beforeskip  = 0.5 \baselineskip,
-            % afterskip   = 0.5 \baselineskip,
-            fixskip     = true,
+            format       = \zihao{-4}\heiti,
+            % beforeskip   = 0.5 \baselineskip,
+            % afterskip    = 0.5 \baselineskip,
+            fixskip      = true,
           },
     }
   }
@@ -1006,12 +1013,17 @@
       }
   }
 %tag 设置
-\use:c { __whu_ \g__whu_thesis_type_tl _set_emunerate_format: }
+\use:c { __whu_ \g__whu_thesis_type_tl _set_enumerate_format: }
 \use:c { __whu_ \g__whu_thesis_type_tl _set_ctex_format: }
 %endregion
 
 
 %region 页眉页脚样式
+\ctex_after_end_preamble:n {
+  \tl_new:N \l__whu_info_header_title_tl
+  \tl_set_eq:NN \l__whu_info_header_title_tl \l__whu_info_title_tl
+  \tl_remove_all:Nn \l__whu_info_header_title_tl { \\ }
+}
 %tag 本科
 \fancypagestyle { bachelor-frontmatter }
   {
@@ -1034,14 +1046,14 @@
   {
     \fancyhf { }
     \fancyhead [CE] { 武汉大学硕士学位论文 }
-    \fancyhead [CO] { \l__whu_info_title_tl }
+    \fancyhead [CO] { \l__whu_info_header_title_tl }
     \fancyfoot [C]  { \zihao{5} \Roman{page} }
   }
 \fancypagestyle { master-mainmatter  }
   {
     \fancyhf { }
     \fancyhead [CE] { 武汉大学硕士学位论文 }
-    \fancyhead [CO] { \l__whu_info_title_tl }
+    \fancyhead [CO] { \l__whu_info_header_title_tl }
     \fancyfoot [C]  { \zihao{5} \arabic{page} }
   }
 %tag 博士
@@ -1050,14 +1062,14 @@
   {
     \fancyhf { }
     \fancyhead [CE] { 武汉大学博士学位论文 }
-    \fancyhead [CO] { \l__whu_info_title_tl }
+    \fancyhead [CO] { \l__whu_info_header_title_tl }
     \fancyfoot [C]  { \zihao{5} \Roman{page} }
   }
 \fancypagestyle { doctor-mainmatter  }
   {
     \fancyhf { }
     \fancyhead [CE] { 武汉大学博士学位论文 }
-    \fancyhead [CO] { \l__whu_info_title_tl }
+    \fancyhead [CO] { \l__whu_info_header_title_tl }
     \fancyfoot [C]  { \zihao{5} \arabic{page} }
   }
 %tag 给-\mainmatter-添加钩子
@@ -1369,18 +1381,18 @@
     \begin{minipage}[b][0.9cm][b]{\textwidth}
       \fangsong \zihao{4} \mode_leave_vertical:
       \__whu_spread_box_with_end_spaces:nn { 2.04cm } { 分类号 }
-      \CJKunderline { \hbox_to_wd:nn { 2.41cm } { \hfill \l__whu_info_clc_tl \hfill } }
+      \underline { \hbox_to_wd:nn { 2.41cm } { \hfill \l__whu_info_clc_tl \hfill } }
       \hfill
       \__whu_spread_box_with_end_spaces:nn { 1.67cm } { 密级 }
-      \CJKunderline { \hbox_to_wd:nn { 2.4cm } { \hfill \l__whu_info_secret_level_tl \hfill } }
+      \underline { \hbox_to_wd:nn { 2.4cm } { \hfill \l__whu_info_secret_level_tl \hfill } }
     \end{minipage}\par\noindent
     \begin{minipage}[b][0.9cm][b]{\textwidth}
       \fangsong \zihao{4} \mode_leave_vertical:
       \__whu_spread_box_with_end_spaces:nn { 2.04cm } { UDC }
-      \CJKunderline { \hbox_to_wd:nn { 2.41cm } { \hfill \l__whu_info_udc_tl \hfill } }
+      \underline { \hbox_to_wd:nn { 2.41cm } { \hfill \l__whu_info_udc_tl \hfill } }
       \hfill
       \__whu_spread_box_with_end_spaces:nn { 1.67cm } { 编号 }
-      \CJKunderline { \hbox_to_wd:nn { 2.4cm } { \hfill 10486 \hfill } }
+      \underline { \hbox_to_wd:nn { 2.4cm } { \hfill 10486 \hfill } }
     \end{minipage}\par
     \skip_vertical:n { 2cm }
   }
@@ -1437,7 +1449,9 @@
         \tl_if_empty:NF \l__whu_info_supervisor_outer_tl
           { \l__whu_info_supervisor_outer_tl 
             \l__whu_info_supervisor_outer_academic_title_tl },
-        \l__whu_info_subject_tl、\l__whu_info_major_tl,
+        \tl_if_empty:NF \l__whu_info_subject_tl
+          { \l__whu_info_subject_tl、}
+          \l__whu_info_major_tl,
         \l__whu_info_research_area_tl
       }
     \noindent
@@ -1729,7 +1743,7 @@
       {
         \zihao{-2}
         \__whu_month_cover_to_english_version:V \l__whu_info_month_int
-        \c_space_tl \int_use:N\c_sys_day_int, \c_space_tl \int_use:N\l__whu_info_year_int
+        \c_space_tl \int_use:N\l__whu_info_day_int, \c_space_tl \int_use:N\l__whu_info_year_int
       };
   }
 %endregion 博士
@@ -1851,14 +1865,14 @@
       \linespread{1}
       \fontsize{12bp}{28bp}\selectfont
       本学位论文作者愿意遵守武汉大学关于保存、使用学位论文的管理办法及规定，即：学校有权保存学位论文的印刷本和电子版，并提供文献检索与阅览服务；学校可以采用影印、缩印、数字化或其它复制手段保存论文；在以教学与科研服务为目的前提下，学校可以在校园网内公布部分或全部内容。 \par
-      \textbf{一、}在本论文提交当年，同意在校园网内以及中国高等教育文献保障系统（CALIS）、高校学位论文系统提供查询及前十六页浏览服务。 \par
+      \textbf{一、}在本论文提交当年，同意在校园网内以及中国高等教育文献保障系统 (CALIS)、高校学位论文系统提供查询及前十六页浏览服务。 \par
       \textbf{二、}在本论文提交 $\square$ 当年／$\square$一年／$\square$ 两年／$\square$ 三年以后，同意在校园网内允许读者在线浏览并下载全文，学校可以为存在馆际合作关系的兄弟高校用户提供文献传递服务和交换服务。（保密论文解密后遵守此规定）\par
       
       \vspace*{3em}
       \begin{minipage}{0.5\textwidth}
-        论文作者（签名）：\CJKunderline*{\hfill} \\[12pt]
-        学号：          \CJKunderline*{\hfill} \\[12pt]
-        学院：          \CJKunderline*{\hfill}
+        论文作者（签名）：\__whu_rulefill: \\[12pt]
+        学号：          \__whu_rulefill: \\[12pt]
+        学院：          \__whu_rulefill:
       \end{minipage} \par \skip_vertical:n { 18pt }
       \hfill 日期：\hspace{3em} 年 \qquad 月 \qquad 日
     \group_end:
